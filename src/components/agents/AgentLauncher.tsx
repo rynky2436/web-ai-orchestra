@@ -1,226 +1,269 @@
 
 import { useState } from "react";
 import { 
+  Bot, 
   Code, 
   Globe, 
-  FolderOpen, 
+  FileText, 
   Terminal, 
-  Settings,
-  Play,
-  Square,
+  Brain,
+  Search,
+  Beaker,
+  FolderOpen,
+  Database,
+  Zap,
   Shield,
-  AlertTriangle
+  Play,
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-
-interface Agent {
-  id: string;
-  name: string;
-  description: string;
-  icon: any;
-  status: 'idle' | 'running' | 'error';
-  permissions: string[];
-  requiresPermission: boolean;
-}
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AgentLauncherProps {
-  onSelectAgent: (agentId: string) => void;
+  onSelectAgent: (agent: string) => void;
   onViewChange: (view: 'chat' | 'agents' | 'settings') => void;
 }
 
-export const AgentLauncher = ({ onSelectAgent, onViewChange }: AgentLauncherProps) => {
-  const [agents] = useState<Agent[]>([
-    {
-      id: 'coder',
-      name: 'Coder Agent',
-      description: 'Writes, reviews, and executes code with live preview capabilities',
-      icon: Code,
-      status: 'idle',
-      permissions: ['file_write', 'code_execution'],
-      requiresPermission: true
-    },
-    {
-      id: 'browser',
-      name: 'Browser Agent',
-      description: 'Automates web browsing and data extraction using Playwright',
-      icon: Globe,
-      status: 'idle',
-      permissions: ['web_access', 'automation'],
-      requiresPermission: true
-    },
-    {
-      id: 'file',
-      name: 'File Agent',
-      description: 'Manages local files, folders, and performs file operations',
-      icon: FolderOpen,
-      status: 'idle',
-      permissions: ['file_read', 'file_write', 'directory_access'],
-      requiresPermission: true
-    },
-    {
-      id: 'terminal',
-      name: 'Terminal Agent',
-      description: 'Executes terminal commands safely within controlled environment',
-      icon: Terminal,
-      status: 'idle',
-      permissions: ['command_execution', 'system_access'],
-      requiresPermission: true
-    }
-  ]);
+const agents = [
+  {
+    id: 'coder',
+    name: 'Coder Agent',
+    description: 'AI-powered code generation, review, and live preview',
+    icon: Code,
+    color: 'from-blue-500 to-cyan-500',
+    permissions: ['File Access', 'Code Execution'],
+    status: 'ready'
+  },
+  {
+    id: 'browser',
+    name: 'Browser Agent',
+    description: 'Web automation, scraping, and browser control',
+    icon: Globe,
+    color: 'from-green-500 to-emerald-500',
+    permissions: ['Web Access', 'Browser Control'],
+    status: 'ready'
+  },
+  {
+    id: 'operator',
+    name: 'Operator Agent',
+    description: 'Master AI controller with full system access',
+    icon: Brain,
+    color: 'from-purple-500 to-pink-500',
+    permissions: ['System Control', 'All Access'],
+    status: 'ready'
+  }
+];
 
-  const [runningAgents, setRunningAgents] = useState<Set<string>>(new Set());
-  const [permissionsEnabled, setPermissionsEnabled] = useState<{ [key: string]: boolean }>({
-    file_access: false,
-    terminal_access: false,
-    web_automation: false,
-    code_execution: false
+const tools = [
+  {
+    id: 'research',
+    name: 'Deep Research',
+    description: 'AI-powered research with multiple sources and synthesis',
+    icon: Search,
+    color: 'from-orange-500 to-red-500',
+    category: 'research'
+  },
+  {
+    id: 'sandbox',
+    name: 'Code Sandbox',
+    description: 'Live coding environment with instant preview',
+    icon: Beaker,
+    color: 'from-indigo-500 to-purple-500',
+    category: 'development'
+  },
+  {
+    id: 'files',
+    name: 'File Manager',
+    description: 'Browse, edit, and manage local files and directories',
+    icon: FolderOpen,
+    color: 'from-teal-500 to-green-500',
+    category: 'system'
+  },
+  {
+    id: 'terminal',
+    name: 'Terminal Control',
+    description: 'Execute commands and scripts safely',
+    icon: Terminal,
+    color: 'from-gray-500 to-slate-500',
+    category: 'system'
+  },
+  {
+    id: 'database',
+    name: 'Data Explorer',
+    description: 'Query and visualize data from various sources',
+    icon: Database,
+    color: 'from-yellow-500 to-orange-500',
+    category: 'data'
+  },
+  {
+    id: 'automation',
+    name: 'Task Automation',
+    description: 'Create and run automated workflows',
+    icon: Zap,
+    color: 'from-pink-500 to-rose-500',
+    category: 'automation'
+  }
+];
+
+export const AgentLauncher = ({ onSelectAgent, onViewChange }: AgentLauncherProps) => {
+  const [permissions, setPermissions] = useState({
+    fileAccess: false,
+    terminalAccess: false,
+    browserControl: false,
+    systemControl: false
   });
 
-  const handleLaunchAgent = (agent: Agent) => {
-    if (agent.requiresPermission && !hasRequiredPermissions(agent)) {
-      // Show permission dialog
-      return;
-    }
-
-    if (runningAgents.has(agent.id)) {
-      // Stop agent
-      setRunningAgents(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(agent.id);
-        return newSet;
-      });
-    } else {
-      // Start agent
-      setRunningAgents(prev => new Set(prev).add(agent.id));
-      onSelectAgent(agent.name);
-      onViewChange('chat');
-    }
+  const handleLaunchAgent = (agentId: string) => {
+    onSelectAgent(agentId);
+    onViewChange('chat');
   };
 
-  const hasRequiredPermissions = (agent: Agent) => {
-    return agent.permissions.some(permission => 
-      permissionsEnabled[permission] || 
-      permissionsEnabled[permission.split('_')[0] + '_access']
-    );
-  };
-
-  const getStatusColor = (status: string, isRunning: boolean) => {
-    if (isRunning) return 'bg-green-500/20 text-green-400 border-green-500/30';
-    switch (status) {
-      case 'running': return 'bg-green-500/20 text-green-400 border-green-500/30';
-      case 'error': return 'bg-red-500/20 text-red-400 border-red-500/30';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-    }
+  const handleLaunchTool = (toolId: string) => {
+    onSelectAgent(toolId);
+    onViewChange('chat');
   };
 
   return (
-    <div className="h-screen overflow-y-auto bg-gradient-to-b from-slate-900/50 to-black/50">
-      {/* Header */}
-      <div className="border-b border-white/10 p-6 bg-black/20 backdrop-blur-lg">
-        <h2 className="text-2xl font-bold text-white mb-2">Agent Launcher</h2>
-        <p className="text-gray-400">Select and configure AI agents for your automation tasks</p>
-      </div>
-
-      {/* Permissions Panel */}
-      <div className="p-6 border-b border-white/10">
-        <div className="flex items-center space-x-2 mb-4">
-          <Shield className="w-5 h-5 text-yellow-400" />
-          <h3 className="text-lg font-semibold text-white">Security Permissions</h3>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          {Object.entries(permissionsEnabled).map(([permission, enabled]) => (
-            <div key={permission} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
-              <div className="flex items-center space-x-2">
-                <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                <span className="text-sm text-white capitalize">{permission.replace('_', ' ')}</span>
-              </div>
-              <Switch
-                checked={enabled}
-                onCheckedChange={(checked) => 
-                  setPermissionsEnabled(prev => ({ ...prev, [permission]: checked }))
-                }
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Agents Grid */}
+    <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 overflow-y-auto">
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {agents.map((agent) => {
-            const isRunning = runningAgents.has(agent.id);
-            const hasPermissions = hasRequiredPermissions(agent);
-            
-            return (
-              <Card 
-                key={agent.id} 
-                className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-200 hover:scale-105"
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-white mb-2">Agent & Tool Hub</h2>
+          <p className="text-gray-400">Launch AI agents and powerful tools for automation, research, and development</p>
+        </div>
+
+        <Tabs defaultValue="agents" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-white/5 border-white/10">
+            <TabsTrigger value="agents" className="text-white data-[state=active]:bg-blue-500/20">AI Agents</TabsTrigger>
+            <TabsTrigger value="tools" className="text-white data-[state=active]:bg-blue-500/20">Tools</TabsTrigger>
+            <TabsTrigger value="permissions" className="text-white data-[state=active]:bg-blue-500/20">Permissions</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="agents" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {agents.map((agent) => (
+                <Card key={agent.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer group">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className={`w-12 h-12 bg-gradient-to-r ${agent.color} rounded-lg flex items-center justify-center`}>
                         <agent.icon className="w-6 h-6 text-white" />
                       </div>
-                      <div>
-                        <CardTitle className="text-white text-lg">{agent.name}</CardTitle>
-                        <Badge className={getStatusColor(agent.status, isRunning)}>
-                          {isRunning ? 'Running' : agent.status}
-                        </Badge>
-                      </div>
+                      <Badge className={`${agent.status === 'ready' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'}`}>
+                        {agent.status}
+                      </Badge>
                     </div>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleLaunchAgent(agent)}
-                      disabled={agent.requiresPermission && !hasPermissions}
-                      className={`${
-                        isRunning 
-                          ? 'bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30' 
-                          : 'bg-green-500/20 border-green-500/30 text-green-400 hover:bg-green-500/30'
-                      }`}
-                    >
-                      {isRunning ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </CardHeader>
-                
-                <CardContent>
-                  <CardDescription className="text-gray-300 mb-4">
-                    {agent.description}
-                  </CardDescription>
-                  
-                  <div className="space-y-2">
-                    <div className="text-xs text-gray-400">Required Permissions:</div>
-                    <div className="flex flex-wrap gap-1">
+                    <CardTitle className="text-white text-lg">{agent.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-400 text-sm mb-4">{agent.description}</p>
+                    <div className="flex flex-wrap gap-1 mb-4">
                       {agent.permissions.map((permission) => (
-                        <Badge 
-                          key={permission} 
-                          variant="outline" 
-                          className="text-xs bg-white/5 border-white/20 text-gray-300"
-                        >
+                        <Badge key={permission} variant="outline" className="text-xs border-white/20 text-gray-300">
                           {permission}
                         </Badge>
                       ))}
                     </div>
-                  </div>
+                    <Button 
+                      onClick={() => handleLaunchAgent(agent.id)}
+                      className="w-full bg-blue-500 hover:bg-blue-600 text-white group-hover:bg-blue-400"
+                    >
+                      <Play className="w-4 h-4 mr-2" />
+                      Launch Agent
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
 
-                  {agent.requiresPermission && !hasPermissions && (
-                    <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs text-yellow-400">
-                      ⚠️ Missing required permissions
+          <TabsContent value="tools" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {tools.map((tool) => (
+                <Card key={tool.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer group">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className={`w-12 h-12 bg-gradient-to-r ${tool.color} rounded-lg flex items-center justify-center`}>
+                        <tool.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <Badge variant="outline" className="border-white/20 text-gray-300 capitalize">
+                        {tool.category}
+                      </Badge>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                    <CardTitle className="text-white text-lg">{tool.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-400 text-sm mb-4">{tool.description}</p>
+                    <Button 
+                      onClick={() => handleLaunchTool(tool.id)}
+                      className="w-full bg-purple-500 hover:bg-purple-600 text-white group-hover:bg-purple-400"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Open Tool
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="permissions" className="mt-6">
+            <Card className="bg-white/5 border-white/10">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <Shield className="w-5 h-5 text-yellow-400" />
+                  <CardTitle className="text-white">Security Permissions</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-white font-medium">File System Access</h4>
+                    <p className="text-gray-400 text-sm">Allow agents to read and write local files</p>
+                  </div>
+                  <Switch 
+                    checked={permissions.fileAccess}
+                    onCheckedChange={(checked) => setPermissions(prev => ({ ...prev, fileAccess: checked }))}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-white font-medium">Terminal Access</h4>
+                    <p className="text-gray-400 text-sm">Allow agents to execute terminal commands</p>
+                  </div>
+                  <Switch 
+                    checked={permissions.terminalAccess}
+                    onCheckedChange={(checked) => setPermissions(prev => ({ ...prev, terminalAccess: checked }))}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-white font-medium">Browser Control</h4>
+                    <p className="text-gray-400 text-sm">Allow agents to control web browsers</p>
+                  </div>
+                  <Switch 
+                    checked={permissions.browserControl}
+                    onCheckedChange={(checked) => setPermissions(prev => ({ ...prev, browserControl: checked }))}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-white font-medium">System Control</h4>
+                    <p className="text-gray-400 text-sm">Allow full system access (Operator Agent only)</p>
+                  </div>
+                  <Switch 
+                    checked={permissions.systemControl}
+                    onCheckedChange={(checked) => setPermissions(prev => ({ ...prev, systemControl: checked }))}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

@@ -4,6 +4,9 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { AgentLauncher } from "@/components/agents/AgentLauncher";
 import { Settings } from "@/components/settings/Settings";
+import { ResearchTool } from "@/components/tools/ResearchTool";
+import { CodeSandbox } from "@/components/tools/CodeSandbox";
+import { FileManager } from "@/components/tools/FileManager";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 const Index = () => {
@@ -11,6 +14,18 @@ const Index = () => {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 
   const renderMainContent = () => {
+    // Handle tool views
+    if (selectedAgent === 'research') {
+      return <ResearchTool />;
+    }
+    if (selectedAgent === 'sandbox') {
+      return <CodeSandbox />;
+    }
+    if (selectedAgent === 'files') {
+      return <FileManager />;
+    }
+
+    // Handle main views
     switch (activeView) {
       case 'chat':
         return <ChatPanel selectedAgent={selectedAgent} />;
