@@ -7,6 +7,10 @@ import { Settings } from "@/components/settings/Settings";
 import { ResearchTool } from "@/components/tools/ResearchTool";
 import { CodeSandbox } from "@/components/tools/CodeSandbox";
 import { FileManager } from "@/components/tools/FileManager";
+import { OperatorModule } from "@/components/modules/OperatorModule";
+import { BrowserAutomation } from "@/components/modules/BrowserAutomation";
+import { PluginSystem } from "@/components/modules/PluginSystem";
+import { AISwitch } from "@/components/modules/AISwitch";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 const Index = () => {
@@ -14,7 +18,21 @@ const Index = () => {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 
   const renderMainContent = () => {
-    // Handle tool views
+    // Handle new module views
+    if (selectedAgent === 'operator') {
+      return <OperatorModule />;
+    }
+    if (selectedAgent === 'browser-automation') {
+      return <BrowserAutomation />;
+    }
+    if (selectedAgent === 'plugins') {
+      return <PluginSystem />;
+    }
+    if (selectedAgent === 'ai-switch') {
+      return <AISwitch />;
+    }
+    
+    // Handle existing tool views
     if (selectedAgent === 'research') {
       return <ResearchTool />;
     }
