@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   MessageSquare, 
@@ -44,7 +43,15 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
   ];
 
-  const availableProviders = moduleManager?.getAvailableProviders() || ['custom'];
+  // Safe way to get available providers
+  const getAvailableProviders = () => {
+    if (!moduleManager || typeof moduleManager.getAvailableProviders !== 'function') {
+      return ['custom', 'openai', 'claude', 'ollama'];
+    }
+    return moduleManager.getAvailableProviders();
+  };
+
+  const availableProviders = getAvailableProviders();
 
   const getProviderDisplayName = (providerId: string) => {
     const providerNames = {
