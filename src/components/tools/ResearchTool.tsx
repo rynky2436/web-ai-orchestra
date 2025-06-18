@@ -1,20 +1,19 @@
-
 import { useState } from "react";
 import { Search, Globe, BookOpen, FileText, Download, Filter, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChatInterface } from "@/components/shared/ChatInterface";
 
 export const ResearchTool = () => {
   const [query, setQuery] = useState('');
-  const [chatInput, setChatInput] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<any[]>([]);
-  const [chatMessages, setChatMessages] = useState<Array<{role: string, content: string}>>([
-    { role: 'assistant', content: 'Hello! I\'m your research assistant. What would you like to research today?' }
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [messages, setMessages] = useState([
+    { role: 'assistant' as const, content: 'Hello! I\'m your research assistant. I can help you find information, analyze sources, and generate comprehensive research reports. What would you like to research today?' }
   ]);
 
   const handleSearch = async () => {
@@ -47,23 +46,47 @@ export const ResearchTool = () => {
     }, 2000);
   };
 
-  const handleChatSubmit = () => {
-    if (!chatInput.trim()) return;
+  const handleAIMessage = (message: string) => {
+    setIsProcessing(true);
+    setMessages(prev => [...prev, { role: 'user', content: message }]);
     
-    setChatMessages(prev => [
-      ...prev,
-      { role: 'user', content: chatInput },
-      { role: 'assistant', content: `I'll help you research "${chatInput}". Let me gather relevant information and analysis for you.` }
-    ]);
-    setChatInput('');
+    // Simulate AI response
+    setTimeout(() => {
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: `I'll help you research "${message}". Let me gather relevant information and analysis for you.` 
+      }]);
+      setIsProcessing(false);
+    }, 1500);
   };
 
   return (
     <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 flex flex-col">
+      {/* Header with Research Toolbar */}
       <div className="border-b border-white/10 p-4 bg-black/20 backdrop-blur-lg">
-        <h2 className="text-xl font-semibold text-white mb-4">Deep Research Tool</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+              <Search className="w-4 h-4 text-white" />
+            </div>
+            <h2 className="text-xl font-semibold text-white">Deep Research Tool</h2>
+          </div>
+          
+          {/* Research Toolbar */}
+          <div className="flex items-center space-x-2 bg-white/5 rounded-lg p-2">
+            <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
+            </Button>
+            <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+          </div>
+        </div>
         
-        <div className="flex space-x-2 mb-4">
+        {/* Search Bar */}
+        <div className="flex space-x-2">
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -74,11 +97,9 @@ export const ResearchTool = () => {
           <Button
             onClick={handleSearch}
             disabled={isSearching || !query.trim()}
-            className="bg-orange-500 hover:bg-orange-600 text-white"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6"
           >
-            {isSearching ? (
-              <>Searching...</>
-            ) : (
+            {isSearching ? 'Searching...' : (
               <>
                 <Search className="w-4 h-4 mr-2" />
                 Research
@@ -89,7 +110,7 @@ export const ResearchTool = () => {
       </div>
 
       <div className="flex-1 flex">
-        {/* Results Panel */}
+        {/* Main Content - Results Panel */}
         <div className="flex-1 overflow-y-auto p-4">
           {results.length > 0 ? (
             <Tabs defaultValue="results" className="w-full">
@@ -187,45 +208,16 @@ export const ResearchTool = () => {
           )}
         </div>
 
-        {/* Chat Panel */}
-        <div className="w-80 border-l border-white/10 flex flex-col">
-          <div className="p-4 border-b border-white/10 bg-black/20">
-            <h3 className="text-white font-medium">Research Assistant</h3>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {chatMessages.map((message, index) => (
-              <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-3 rounded-lg ${
-                  message.role === 'user' 
-                    ? 'bg-blue-500/20 text-blue-100' 
-                    : 'bg-white/5 text-gray-300'
-                }`}>
-                  {message.content}
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="p-4 border-t border-white/10">
-            <div className="flex space-x-2">
-              <Input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask about your research..."
-                className="flex-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
-                onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
-              />
-              <Button
-                onClick={handleChatSubmit}
-                disabled={!chatInput.trim()}
-                size="sm"
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-              >
-                Send
-              </Button>
-            </div>
-          </div>
+        {/* Standardized AI Chat Interface */}
+        <div className="w-96 border-l border-white/10">
+          <ChatInterface
+            title="Research Assistant"
+            placeholder="Ask me to research topics, analyze sources, or explain findings..."
+            messages={messages}
+            onSendMessage={handleAIMessage}
+            isProcessing={isProcessing}
+            className="h-full"
+          />
         </div>
       </div>
     </div>

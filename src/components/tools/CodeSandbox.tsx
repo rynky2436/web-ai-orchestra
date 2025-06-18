@@ -5,12 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { AIChat } from "@/components/shared/AIChat";
+import { ChatInterface } from "@/components/shared/ChatInterface";
 
 export const CodeSandbox = () => {
   const [code, setCode] = useState('// Write your code here\nconsole.log("Hello, NexusAI!");');
   const [output, setOutput] = useState('');
   const [aiRequest, setAiRequest] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [messages, setMessages] = useState([
+    { role: 'assistant' as const, content: 'Hello! I\'m your AI coding assistant. I can help you write, debug, explain, and optimize code. What would you like to work on?' }
+  ]);
 
   const runCode = () => {
     try {
@@ -38,13 +42,22 @@ ${aiRequest.replace(/\s+/g, '')}();`;
   };
 
   const handleAIMessage = (message: string) => {
-    console.log('AI Code Assistant received:', message);
-    // Handle AI communication here
+    setIsProcessing(true);
+    setMessages(prev => [...prev, { role: 'user', content: message }]);
+    
+    // Simulate AI response
+    setTimeout(() => {
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: `I'll help you with "${message}". Let me analyze your code and provide assistance.` 
+      }]);
+      setIsProcessing(false);
+    }, 1000);
   };
 
   return (
     <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 flex flex-col">
-      {/* Header */}
+      {/* Header with Toolbar */}
       <div className="border-b border-white/10 p-6 bg-black/20 backdrop-blur-lg">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
@@ -57,8 +70,9 @@ ${aiRequest.replace(/\s+/g, '')}();`;
             </div>
           </div>
           
-          <div className="flex space-x-2">
-            <Button onClick={runCode} className="bg-green-500 hover:bg-green-600 text-white px-6">
+          {/* Primary Toolbar */}
+          <div className="flex items-center space-x-2 bg-white/5 rounded-lg p-2">
+            <Button onClick={runCode} className="bg-green-500 hover:bg-green-600 text-white px-4">
               <Play className="w-4 h-4 mr-2" />
               Run Code
             </Button>
@@ -66,10 +80,14 @@ ${aiRequest.replace(/\s+/g, '')}();`;
               <Save className="w-4 h-4 mr-2" />
               Save
             </Button>
+            <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
           </div>
         </div>
 
-        {/* Quick AI Code Generator */}
+        {/* Quick AI Code Generator Toolbar */}
         <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 p-4 rounded-lg border border-purple-500/30">
           <div className="flex items-center space-x-2 mb-3">
             <Brain className="w-5 h-5 text-purple-400" />
@@ -96,12 +114,19 @@ ${aiRequest.replace(/\s+/g, '')}();`;
       </div>
 
       <div className="flex-1 flex">
-        {/* Code Editor and Output */}
+        {/* Main Content - Code Editor and Output */}
         <div className="flex-1 flex flex-col">
           <div className="flex-1 p-4">
             <Card className="bg-white/5 border-white/10 h-full">
-              <CardHeader>
-                <CardTitle className="text-white">Code Editor</CardTitle>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-white">Code Editor</CardTitle>
+                  <div className="flex space-x-2">
+                    <Button size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+                      <RefreshCw className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="flex-1">
                 <Textarea
@@ -142,11 +167,12 @@ ${aiRequest.replace(/\s+/g, '')}();`;
 
         {/* Standardized AI Chat Interface */}
         <div className="w-96 border-l border-white/10">
-          <AIChat
+          <ChatInterface
             title="Code Assistant"
             placeholder="Ask about coding, debugging, or optimizations..."
-            initialMessage="Hello! I'm your AI coding assistant. I can help you write, debug, explain, and optimize code. What would you like to work on?"
+            messages={messages}
             onSendMessage={handleAIMessage}
+            isProcessing={isProcessing}
             className="h-full"
           />
         </div>
