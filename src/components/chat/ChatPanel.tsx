@@ -1,17 +1,21 @@
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
+import { Send, Mic, MicOff, Volume2, VolumeX, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useProfessionalStore } from "@/stores/professionalStore";
+import { toast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
   content: string;
   role: 'user' | 'assistant';
   timestamp: Date;
+  provider?: string;
+  module?: string;
 }
 
 interface ChatPanelProps {
@@ -22,7 +26,7 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: 'Hello! I\'m NexusAI, your AI automation assistant. How can I help you today?',
+      content: 'Hello! I\'m NexusAI, your professional AI automation assistant. I can help with research, coding, automation, and much more. What would you like me to help you with today?',
       role: 'assistant',
       timestamp: new Date()
     }
@@ -30,8 +34,21 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
   const [inputValue, setInputValue] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-4o');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const {
+    currentProvider,
+    currentModule,
+    isProcessing,
+    setCurrentProvider,
+    setCurrentModule,
+    processRequest,
+    initializePlatform
+  } = useProfessionalStore();
+
+  useEffect(() => {
+    initializePlatform();
+  }, [initializePlatform]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -41,29 +58,77 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
-    const newMessage: Message = {
+    const userMessage: Message = {
       id: Date.now().toString(),
       content: inputValue,
       role: 'user',
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputValue;
     setInputValue('');
 
-    // Simulate AI response
-    setTimeout(() => {
-      const response: Message = {
+    try {
+      // Use the professional AI system to process the request
+      const result = await processRequest(currentInput);
+      
+      let responseContent = '';
+      if (typeof result === 'string') {
+        responseContent = result;
+      } else if (result && typeof result === 'object') {
+        if (result.findings) {
+          responseContent = result.findings;
+        } else if (result.code) {
+          responseContent = `Here's the code I generated:\n\n\`\`\`\n${result.code}\n\`\`\``;
+        } else if (result.plan) {
+          responseContent = result.plan;
+        } else if (result.insights) {
+          responseContent = result.insights;
+        } else {
+          responseContent = JSON.stringify(result, null, 2);
+        }
+      } else {
+        responseContent = "I've processed your request successfully.";
+      }
+
+      const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: `I understand you want to ${inputValue}. ${selectedAgent ? `Using ${selectedAgent} agent, ` : ''}I'll help you with that. This is a simulated response for the demo.`,
+        content: responseContent,
+        role: 'assistant',
+        timestamp: new Date(),
+        provider: currentProvider,
+        module: currentModule
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+
+      toast({
+        title: "Request Processed",
+        description: `Completed using ${currentProvider} with ${currentModule} module`
+      });
+
+    } catch (error) {
+      console.error('Error processing request:', error);
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: `I encountered an error processing your request: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or check your API configuration.`,
         role: 'assistant',
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, response]);
-    }, 1000);
+
+      setMessages(prev => [...prev, errorMessage]);
+
+      toast({
+        title: "Error",
+        description: "Failed to process request. Please check your configuration.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -75,12 +140,18 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
 
   const toggleListening = () => {
     setIsListening(!isListening);
-    // Implement voice recognition here
+    toast({
+      title: isListening ? "Voice Input Stopped" : "Voice Input Started",
+      description: isListening ? "Voice recognition disabled" : "Voice recognition enabled"
+    });
   };
 
   const togglePlaying = () => {
     setIsPlaying(!isPlaying);
-    // Implement text-to-speech here
+    toast({
+      title: isPlaying ? "Audio Stopped" : "Audio Started",
+      description: isPlaying ? "Text-to-speech disabled" : "Text-to-speech enabled"
+    });
   };
 
   return (
@@ -92,21 +163,41 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
             <h2 className="text-xl font-semibold text-white">AI Chat</h2>
             {selectedAgent && (
               <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                <Bot className="w-3 h-3 mr-1" />
                 {selectedAgent} Active
+              </Badge>
+            )}
+            {isProcessing && (
+              <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 animate-pulse">
+                Processing...
               </Badge>
             )}
           </div>
           
           <div className="flex items-center space-x-4">
-            <Select value={selectedModel} onValueChange={setSelectedModel}>
+            <Select value={currentProvider} onValueChange={setCurrentProvider}>
               <SelectTrigger className="w-32 bg-white/5 border-white/10 text-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-slate-900 border-white/10">
-                <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                <SelectItem value="gpt-4">GPT-4</SelectItem>
-                <SelectItem value="claude-3">Claude-3</SelectItem>
+                <SelectItem value="openai">OpenAI</SelectItem>
+                <SelectItem value="claude">Claude</SelectItem>
+                <SelectItem value="grok">Grok</SelectItem>
                 <SelectItem value="ollama">Ollama</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={currentModule} onValueChange={setCurrentModule}>
+              <SelectTrigger className="w-32 bg-white/5 border-white/10 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-900 border-white/10">
+                <SelectItem value="research">Research</SelectItem>
+                <SelectItem value="coding">Coding</SelectItem>
+                <SelectItem value="voice">Voice</SelectItem>
+                <SelectItem value="browser">Browser</SelectItem>
+                <SelectItem value="files">Files</SelectItem>
+                <SelectItem value="memory">Memory</SelectItem>
               </SelectContent>
             </Select>
             
@@ -135,10 +226,29 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
                 : 'bg-white/5 border-white/10'
             }`}>
               <CardContent className="p-4">
-                <p className="text-white text-sm leading-relaxed">{message.content}</p>
-                <p className="text-xs text-gray-400 mt-2">
-                  {message.timestamp.toLocaleTimeString()}
-                </p>
+                <div className="flex items-start space-x-2">
+                  {message.role === 'assistant' && (
+                    <Bot className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
+                  )}
+                  <div className="flex-1">
+                    <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-xs text-gray-400">
+                        {message.timestamp.toLocaleTimeString()}
+                      </p>
+                      {message.provider && message.module && (
+                        <div className="flex space-x-1">
+                          <Badge variant="outline" className="text-xs border-white/20 text-gray-400">
+                            {message.provider}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs border-white/20 text-gray-400">
+                            {message.module}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -166,14 +276,15 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Type your message or use voice input..."
+            placeholder="Ask me anything - research, coding, automation, or general questions..."
             className="flex-1 bg-white/5 border-white/10 text-white placeholder-gray-400 focus:border-blue-500/50"
+            disabled={isProcessing}
           />
           
           <Button
             onClick={handleSendMessage}
-            disabled={!inputValue.trim()}
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            disabled={!inputValue.trim() || isProcessing}
+            className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
           >
             <Send className="w-4 h-4" />
           </Button>

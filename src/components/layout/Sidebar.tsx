@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   MessageSquare, 
   Bot, 
@@ -8,12 +8,15 @@ import {
   MicOff,
   Shield,
   Cpu,
-  Power
+  Power,
+  Brain,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { useProfessionalStore } from "@/stores/professionalStore";
 
 interface SidebarProps {
   activeView: 'chat' | 'agents' | 'settings';
@@ -25,11 +28,64 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [serverStatus, setServerStatus] = useState<'connected' | 'disconnected' | 'loading'>('connected');
 
+  const { 
+    currentProvider, 
+    currentModule, 
+    isProcessing,
+    aiProvider,
+    moduleManager 
+  } = useProfessionalStore();
+
   const menuItems = [
     { id: 'chat', label: 'Chat', icon: MessageSquare },
     { id: 'agents', label: 'Agents', icon: Bot },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
   ];
+
+  // Update server status based on AI system state
+  useEffect(() => {
+    if (aiProvider && moduleManager) {
+      setServerStatus('connected');
+    } else {
+      setServerStatus('disconnected');
+    }
+  }, [aiProvider, moduleManager]);
+
+  const getAgentDisplayName = (agent: string | null) => {
+    if (!agent) return null;
+    
+    const agentNames: Record<string, string> = {
+      'professional-ai': 'Professional AI',
+      'operator': 'Operator',
+      'browser-automation': 'Browser Automation',
+      'research': 'Research Tool',
+      'sandbox': 'Code Sandbox',
+      'files': 'File Manager',
+      'plugins': 'Plugin System',
+      'ai-switch': 'AI Switch',
+      'voice': 'Voice Control'
+    };
+    
+    return agentNames[agent] || agent;
+  };
+
+  const getAgentIcon = (agent: string | null) => {
+    if (!agent) return Bot;
+    
+    const agentIcons: Record<string, any> = {
+      'professional-ai': Brain,
+      'operator': Cpu,
+      'browser-automation': Bot,
+      'research': MessageSquare,
+      'sandbox': Cpu,
+      'files': SettingsIcon,
+      'plugins': Zap,
+      'ai-switch': Zap,
+      'voice': Mic
+    };
+    
+    return agentIcons[agent] || Bot;
+  };
 
   return (
     <div className="w-80 bg-black/20 backdrop-blur-lg border-r border-white/10 flex flex-col">
@@ -46,14 +102,14 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
         </div>
       </div>
 
-      {/* Server Status */}
+      {/* System Status */}
       <div className="p-4">
         <Card className="bg-white/5 border-white/10">
-          <CardContent className="p-3">
+          <CardContent className="p-3 space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Power className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-300">Backend</span>
+                <span className="text-sm text-gray-300">System</span>
               </div>
               <Badge 
                 variant={serverStatus === 'connected' ? 'default' : 'destructive'}
@@ -62,6 +118,31 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
                 {serverStatus}
               </Badge>
             </div>
+            
+            {currentProvider && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-400">Provider</span>
+                <Badge variant="outline" className="border-white/20 text-gray-300 text-xs">
+                  {currentProvider}
+                </Badge>
+              </div>
+            )}
+            
+            {currentModule && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-400">Module</span>
+                <Badge variant="outline" className="border-white/20 text-gray-300 text-xs">
+                  {currentModule}
+                </Badge>
+              </div>
+            )}
+            
+            {isProcessing && (
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                <span className="text-xs text-blue-400">Processing...</span>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -93,11 +174,18 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
             <CardContent className="p-3">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-white" />
+                  {(() => {
+                    const IconComponent = getAgentIcon(selectedAgent);
+                    return <IconComponent className="w-4 h-4 text-white" />;
+                  })()}
                 </div>
-                <div>
-                  <div className="text-sm font-medium text-white">{selectedAgent}</div>
-                  <div className="text-xs text-gray-400">Running</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-white truncate">
+                    {getAgentDisplayName(selectedAgent)}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {isProcessing ? 'Processing...' : 'Ready'}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -120,7 +208,7 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
         
         <div className="flex items-center space-x-2 text-xs text-gray-400">
           <Shield className="w-3 h-3" />
-          <span>Permissions: File Access, Terminal</span>
+          <span>AI Platform: Multi-Provider Ready</span>
         </div>
       </div>
     </div>

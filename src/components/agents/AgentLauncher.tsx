@@ -19,13 +19,16 @@ import {
   Chrome,
   Puzzle,
   Mic,
-  Volume2
+  Volume2,
+  Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useProfessionalStore } from "@/stores/professionalStore";
+import { toast } from "@/hooks/use-toast";
 
 interface AgentLauncherProps {
   onSelectAgent: (agent: string) => void;
@@ -33,6 +36,15 @@ interface AgentLauncherProps {
 }
 
 const coreModules = [
+  {
+    id: 'professional-ai',
+    name: 'Professional AI',
+    description: 'Multi-provider AI platform with advanced capabilities',
+    icon: Brain,
+    color: 'from-purple-500 to-pink-500',
+    permissions: ['Multi-AI Access', 'Advanced Processing', 'Memory System'],
+    status: 'ready'
+  },
   {
     id: 'operator',
     name: 'Operator',
@@ -121,14 +133,62 @@ export const AgentLauncher = ({ onSelectAgent, onViewChange }: AgentLauncherProp
     systemControl: false
   });
 
+  const { setCurrentProvider, setCurrentModule, initializePlatform } = useProfessionalStore();
+
   const handleLaunchModule = (moduleId: string) => {
+    if (moduleId === 'professional-ai') {
+      // Initialize the professional AI platform
+      initializePlatform();
+      toast({
+        title: "Professional AI Activated",
+        description: "Multi-provider AI platform is now ready for use"
+      });
+    }
+    
     onSelectAgent(moduleId);
     onViewChange('chat');
   };
 
   const handleLaunchTool = (toolId: string) => {
+    // Set appropriate module based on tool
+    switch (toolId) {
+      case 'research':
+        setCurrentModule('research');
+        break;
+      case 'sandbox':
+        setCurrentModule('coding');
+        break;
+      case 'files':
+        setCurrentModule('files');
+        break;
+      case 'voice':
+        setCurrentModule('voice');
+        break;
+      default:
+        setCurrentModule('research');
+    }
+    
     onSelectAgent(toolId);
     onViewChange('chat');
+    
+    toast({
+      title: `${toolId} Tool Launched`,
+      description: "Tool is now active and ready for use"
+    });
+  };
+
+  const handleQuickStart = () => {
+    // Quick start with professional AI
+    setCurrentProvider('openai');
+    setCurrentModule('research');
+    initializePlatform();
+    onSelectAgent('professional-ai');
+    onViewChange('chat');
+    
+    toast({
+      title: "Quick Start Activated",
+      description: "NexusAI is ready with OpenAI Research module"
+    });
   };
 
   return (
@@ -136,7 +196,15 @@ export const AgentLauncher = ({ onSelectAgent, onViewChange }: AgentLauncherProp
       <div className="p-6">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-white mb-2">NexusAI Control Center</h2>
-          <p className="text-gray-400">Launch AI modules and tools for complete automation, development, and system control</p>
+          <p className="text-gray-400 mb-4">Launch AI modules and tools for complete automation, development, and system control</p>
+          
+          <Button 
+            onClick={handleQuickStart}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 py-2"
+          >
+            <Play className="w-4 h-4 mr-2" />
+            Quick Start NexusAI
+          </Button>
         </div>
 
         <Tabs defaultValue="modules" className="w-full">
@@ -147,7 +215,7 @@ export const AgentLauncher = ({ onSelectAgent, onViewChange }: AgentLauncherProp
           </TabsList>
 
           <TabsContent value="modules" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
               {coreModules.map((module) => (
                 <Card key={module.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer group">
                   <CardHeader className="pb-3">
@@ -214,59 +282,104 @@ export const AgentLauncher = ({ onSelectAgent, onViewChange }: AgentLauncherProp
           </TabsContent>
 
           <TabsContent value="permissions" className="mt-6">
-            <Card className="bg-white/5 border-white/10">
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <Shield className="w-5 h-5 text-yellow-400" />
-                  <CardTitle className="text-white">Security Permissions</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-white font-medium">File System Access</h4>
-                    <p className="text-gray-400 text-sm">Allow agents to read and write local files</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="bg-white/5 border-white/10">
+                <CardHeader>
+                  <div className="flex items-center space-x-2">
+                    <Shield className="w-5 h-5 text-yellow-400" />
+                    <CardTitle className="text-white">Security Permissions</CardTitle>
                   </div>
-                  <Switch 
-                    checked={permissions.fileAccess}
-                    onCheckedChange={(checked) => setPermissions(prev => ({ ...prev, fileAccess: checked }))}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-white font-medium">Terminal Access</h4>
-                    <p className="text-gray-400 text-sm">Allow agents to execute terminal commands</p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-white font-medium">File System Access</h4>
+                      <p className="text-gray-400 text-sm">Allow agents to read and write local files</p>
+                    </div>
+                    <Switch 
+                      checked={permissions.fileAccess}
+                      onCheckedChange={(checked) => setPermissions(prev => ({ ...prev, fileAccess: checked }))}
+                    />
                   </div>
-                  <Switch 
-                    checked={permissions.terminalAccess}
-                    onCheckedChange={(checked) => setPermissions(prev => ({ ...prev, terminalAccess: checked }))}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-white font-medium">Browser Control</h4>
-                    <p className="text-gray-400 text-sm">Allow agents to control web browsers</p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-white font-medium">Terminal Access</h4>
+                      <p className="text-gray-400 text-sm">Allow agents to execute terminal commands</p>
+                    </div>
+                    <Switch 
+                      checked={permissions.terminalAccess}
+                      onCheckedChange={(checked) => setPermissions(prev => ({ ...prev, terminalAccess: checked }))}
+                    />
                   </div>
-                  <Switch 
-                    checked={permissions.browserControl}
-                    onCheckedChange={(checked) => setPermissions(prev => ({ ...prev, browserControl: checked }))}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-white font-medium">System Control</h4>
-                    <p className="text-gray-400 text-sm">Allow full system access (Operator Agent only)</p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-white font-medium">Browser Control</h4>
+                      <p className="text-gray-400 text-sm">Allow agents to control web browsers</p>
+                    </div>
+                    <Switch 
+                      checked={permissions.browserControl}
+                      onCheckedChange={(checked) => setPermissions(prev => ({ ...prev, browserControl: checked }))}
+                    />
                   </div>
-                  <Switch 
-                    checked={permissions.systemControl}
-                    onCheckedChange={(checked) => setPermissions(prev => ({ ...prev, systemControl: checked }))}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-white font-medium">System Control</h4>
+                      <p className="text-gray-400 text-sm">Allow full system access (Operator Agent only)</p>
+                    </div>
+                    <Switch 
+                      checked={permissions.systemControl}
+                      onCheckedChange={(checked) => setPermissions(prev => ({ ...prev, systemControl: checked }))}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/5 border-white/10">
+                <CardHeader>
+                  <div className="flex items-center space-x-2">
+                    <Settings className="w-5 h-5 text-blue-400" />
+                    <CardTitle className="text-white">Quick Actions</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button 
+                    onClick={() => handleLaunchModule('professional-ai')}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                  >
+                    <Brain className="w-4 h-4 mr-2" />
+                    Launch Professional AI
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => handleLaunchTool('research')}
+                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
+                  >
+                    <Search className="w-4 h-4 mr-2" />
+                    Start Research
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => handleLaunchTool('sandbox')}
+                    className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white"
+                  >
+                    <Code className="w-4 h-4 mr-2" />
+                    Open Code Editor
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => onViewChange('settings')}
+                    variant="outline"
+                    className="w-full bg-white/5 border-white/10 text-white hover:bg-white/10"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configure Settings
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
