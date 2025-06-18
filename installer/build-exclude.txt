@@ -1,12 +1,15 @@
 
-.git\
-node_modules\
-.vscode\
-build\
-dist\
+.git\*
+node_modules\*
+.vscode\*
+build\*
+dist\*
 *.log
-.env
-.env.local
+.env*
 *.tmp
 *.temp
-.cache\
+.cache\*
+__pycache__\*
+*.pyc
+installer\build\*
+*.zip

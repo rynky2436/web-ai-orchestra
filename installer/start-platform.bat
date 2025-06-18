@@ -20,11 +20,10 @@ if %errorLevel% neq 0 (
     exit /b 1
 )
 
-:: Check if Node.js is available
-node --version >nul 2>&1
-if %errorLevel% neq 0 (
-    echo Error: Node.js is not installed or not in PATH
-    echo Please run the installer again.
+:: Check if we're in the right directory
+if not exist "main_server.py" (
+    echo Error: main_server.py not found
+    echo Make sure you're running this from the correct directory.
     pause
     exit /b 1
 )
@@ -39,12 +38,14 @@ echo Close this window to stop the platform.
 echo.
 
 :: Start the Python server in the background
-start /B python start.py
+start /B python main_server.py
 
 :: Wait a moment for server to start
+echo Waiting for server to start...
 timeout /t 5 /nobreak >nul
 
 :: Open the browser automatically
+echo Opening browser...
 start http://localhost:7777
 
 echo.
@@ -57,7 +58,9 @@ echo Press any key to stop the platform...
 pause >nul
 
 :: Kill the Python process when user stops
-taskkill /f /im python.exe 2>nul
+echo Stopping platform...
+taskkill /f /im python.exe /fi "WINDOWTITLE eq *main_server*" 2>nul
+taskkill /f /im python.exe /fi "COMMANDLINE eq *main_server.py*" 2>nul
 
 echo.
 echo Platform stopped.
