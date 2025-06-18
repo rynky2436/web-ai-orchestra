@@ -12,7 +12,9 @@ import {
   Zap,
   Layers,
   Smartphone,
-  Monitor
+  Monitor,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +32,7 @@ export const CodeCreatorAgent = () => {
   const [generatedCode, setGeneratedCode] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [projectName, setProjectName] = useState('');
+  const [showPreview, setShowPreview] = useState(true);
 
   const projectTypes = [
     { id: 'website', name: 'Website', icon: Globe, description: 'Full websites with HTML, CSS, JavaScript' },
@@ -82,9 +85,21 @@ ${projectType === 'website' ? `
             border-radius: 20px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.2);
+            animation: fadeIn 1s ease-out;
         }
-        h1 { font-size: 3rem; margin-bottom: 1rem; }
-        p { font-size: 1.2rem; opacity: 0.9; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 { 
+            font-size: 3rem; 
+            margin-bottom: 1rem; 
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        p { font-size: 1.2rem; opacity: 0.9; margin-bottom: 2rem; }
         .button {
             background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
             border: none;
@@ -93,18 +108,62 @@ ${projectType === 'website' ? `
             color: white;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 2rem;
-            transition: transform 0.2s;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        .button:hover { transform: translateY(-2px); }
+        .button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .feature {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>${projectName || 'Welcome'}</h1>
+        <h1>${projectName || 'Welcome to NexusAI'}</h1>
         <p>${description}</p>
-        <button class="button" onclick="alert('Hello from NexusAI!')">Get Started</button>
+        <button class="button" onclick="showAlert()">Get Started</button>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>🚀 Fast</h3>
+                <p>Lightning fast performance</p>
+            </div>
+            <div class="feature">
+                <h3>🎨 Beautiful</h3>
+                <p>Modern, clean design</p>
+            </div>
+            <div class="feature">
+                <h3>📱 Responsive</h3>
+                <p>Works on all devices</p>
+            </div>
+        </div>
     </div>
+    
+    <script>
+        function showAlert() {
+            alert('Hello from NexusAI! Your website is ready to customize.');
+        }
+        
+        // Add some interactivity
+        document.addEventListener('mousemove', (e) => {
+            const container = document.querySelector('.container');
+            const x = (e.clientX / window.innerWidth) * 10;
+            const y = (e.clientY / window.innerHeight) * 10;
+            container.style.transform = \`translateX(\${x}px) translateY(\${y}px)\`;
+        });
+    </script>
 </body>
 </html>
 ` : projectType === 'plugin' ? `
@@ -296,24 +355,78 @@ export default ${projectName?.replace(/\s+/g, '') || 'MyComponent'};
     // Handle AI code creation requests
   };
 
+  const getPreviewContent = () => {
+    if (!generatedCode) return '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #888; font-family: Arial;">Generate some code to see the preview</div>';
+    
+    if (projectType === 'website') {
+      return generatedCode;
+    } else if (projectType === 'theme') {
+      return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            ${generatedCode}
+          </style>
+        </head>
+        <body>
+          <div class="theme-container">
+            <div style="padding: 2rem;">
+              <div class="card">
+                <h1 class="text-gradient">Theme Preview</h1>
+                <p>This is how your theme looks in action.</p>
+                <button class="button">Sample Button</button>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+    } else {
+      return `
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #888; font-family: Arial; text-align: center;">
+          <div>
+            <h3>Code Generated</h3>
+            <p>Preview not available for ${projectType} projects</p>
+            <p>Use the download button to get your files</p>
+          </div>
+        </div>
+      `;
+    }
+  };
+
   return (
     <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 flex flex-col">
       {/* Header */}
       <div className="border-b border-white/10 p-4 bg-black/20 backdrop-blur-lg">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-violet-500 to-purple-500 rounded-lg flex items-center justify-center">
-            <Code className="w-4 h-4 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-violet-500 to-purple-500 rounded-lg flex items-center justify-center">
+              <Code className="w-4 h-4 text-white" />
+            </div>
+            <h2 className="text-xl font-semibold text-white">Code Creator Agent</h2>
+            <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+              AI-Powered Development
+            </Badge>
           </div>
-          <h2 className="text-xl font-semibold text-white">Code Creator Agent</h2>
-          <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-            AI-Powered Development
-          </Badge>
+          
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPreview(!showPreview)}
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+            >
+              {showPreview ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+              {showPreview ? 'Hide' : 'Show'} Preview
+            </Button>
+          </div>
         </div>
       </div>
 
       <div className="flex-1 flex">
         {/* Main Content Area */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className={`${showPreview ? 'w-1/2' : 'flex-1'} p-6 overflow-y-auto border-r border-white/10`}>
           <Tabs defaultValue="create" className="w-full">
             <TabsList className="grid w-full grid-cols-3 bg-white/5 border-white/10">
               <TabsTrigger value="create" className="text-white data-[state=active]:bg-purple-500/20">Create</TabsTrigger>
@@ -461,7 +574,31 @@ export default ${projectName?.replace(/\s+/g, '') || 'MyComponent'};
           </Tabs>
         </div>
 
-        {/* Standardized AI Chat Interface */}
+        {/* Live Preview Panel */}
+        {showPreview && (
+          <div className="w-1/2 flex flex-col border-r border-white/10">
+            <div className="p-4 border-b border-white/10 bg-black/20">
+              <div className="flex items-center space-x-2">
+                <Eye className="w-4 h-4 text-blue-400" />
+                <h3 className="text-white font-medium">Live Preview</h3>
+                <Badge variant="outline" className="border-blue-500/30 text-blue-400">
+                  {projectType}
+                </Badge>
+              </div>
+            </div>
+            
+            <div className="flex-1 bg-white">
+              <iframe
+                srcDoc={getPreviewContent()}
+                className="w-full h-full border-none"
+                title="Live Preview"
+                sandbox="allow-scripts"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* AI Chat Interface */}
         <div className="w-96 border-l border-white/10">
           <AIChat
             title="Code Creation AI"
