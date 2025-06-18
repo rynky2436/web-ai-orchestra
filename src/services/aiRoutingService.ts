@@ -1,4 +1,3 @@
-
 /**
  * AI Routing Service - Frontend integration for component routing and pre-prompt injection
  */
@@ -29,11 +28,51 @@ export interface ProviderStatus {
   error?: string;
 }
 
+export interface DecisionEngineTask {
+  taskType: string;
+  userInput: string;
+  systemRole: string;
+  metadata: {
+    component: string;
+    action: string;
+    [key: string]: any;
+  };
+}
+
 export class AIRoutingService {
   private baseUrl: string;
 
   constructor(baseUrl: string = '/api') {
     this.baseUrl = baseUrl;
+  }
+
+  /**
+   * Route a task through the decision engine with proper structure
+   */
+  async routeTaskThroughDecisionEngine(task: DecisionEngineTask): Promise<any> {
+    try {
+      const response = await fetch(`${this.baseUrl}/decision-engine/route`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          task_type: task.taskType,
+          user_input: task.userInput,
+          system_role: task.systemRole,
+          metadata: task.metadata
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Decision engine routing failed: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Decision engine routing error:', error);
+      throw error;
+    }
   }
 
   /**
