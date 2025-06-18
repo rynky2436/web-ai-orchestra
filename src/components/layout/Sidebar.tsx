@@ -146,6 +146,14 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent, onAgentChange
     onViewChange('chat');
   };
 
+  const handleMenuItemClick = (viewId: 'chat' | 'agents' | 'settings') => {
+    // Clear selected agent when switching to agents view
+    if (viewId === 'agents' && onAgentChange) {
+      onAgentChange(null);
+    }
+    onViewChange(viewId);
+  };
+
   return (
     <div className="w-80 bg-black/20 backdrop-blur-lg border-r border-white/10 flex flex-col">
       {/* Header */}
@@ -277,7 +285,7 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent, onAgentChange
                 ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' 
                 : 'text-gray-300 hover:text-white hover:bg-white/5'
             }`}
-            onClick={() => onViewChange(item.id as any)}
+            onClick={() => handleMenuItemClick(item.id as any)}
           >
             <item.icon className="w-4 h-4 mr-3" />
             {item.label}

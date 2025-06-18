@@ -32,6 +32,14 @@ const Index = () => {
     setActiveView('chat');
   };
 
+  const handleViewChange = (view: 'chat' | 'agents' | 'settings') => {
+    setActiveView(view);
+    // Clear selected agent when switching to agents view
+    if (view === 'agents') {
+      setSelectedAgent(null);
+    }
+  };
+
   const renderMainContent = () => {
     // Handle new agent modules
     if (selectedAgent === 'customer-manager') {
@@ -98,7 +106,7 @@ const Index = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex w-full">
         <Sidebar 
           activeView={activeView} 
-          onViewChange={setActiveView}
+          onViewChange={handleViewChange}
           selectedAgent={selectedAgent}
           onAgentChange={handleAgentChange}
         />
