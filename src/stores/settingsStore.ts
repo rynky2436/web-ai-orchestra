@@ -3,14 +3,18 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { AIProvider, AppSettings } from '@/types/modules';
 
+export type Theme = 'gradient' | 'professional' | 'dark-professional' | 'minimal';
+
 interface SettingsStore {
   settings: AppSettings;
   aiProviders: AIProvider[];
   elevenLabsApiKey: string;
+  currentTheme: Theme;
   updateSettings: (settings: Partial<AppSettings>) => void;
   updateAIProvider: (providerId: string, updates: Partial<AIProvider>) => void;
   addAIProvider: (provider: AIProvider) => void;
   setElevenLabsApiKey: (key: string) => void;
+  setTheme: (theme: Theme) => void;
 }
 
 const defaultSettings: AppSettings = {
@@ -66,6 +70,7 @@ export const useSettingsStore = create<SettingsStore>()(
       settings: defaultSettings,
       aiProviders: defaultProviders,
       elevenLabsApiKey: '',
+      currentTheme: 'gradient',
       updateSettings: (newSettings) =>
         set((state) => ({
           settings: { ...state.settings, ...newSettings }
@@ -81,7 +86,9 @@ export const useSettingsStore = create<SettingsStore>()(
           aiProviders: [...state.aiProviders, provider]
         })),
       setElevenLabsApiKey: (key) =>
-        set({ elevenLabsApiKey: key })
+        set({ elevenLabsApiKey: key }),
+      setTheme: (theme) =>
+        set({ currentTheme: theme })
     }),
     {
       name: 'nexusai-settings'

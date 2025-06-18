@@ -18,10 +18,12 @@ import { ProfessionalAI } from "@/components/modules/ProfessionalAI";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { CustomerManager } from "@/components/agents/CustomerManager";
 import { AIImageCreator } from "@/components/agents/AIImageCreator";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 const Index = () => {
   const [activeView, setActiveView] = useState<'chat' | 'agents' | 'settings'>('chat');
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+  const { currentTheme } = useSettingsStore();
 
   const handleAgentChange = (agent: string | null) => {
     setSelectedAgent(agent);
@@ -37,6 +39,19 @@ const Index = () => {
     // Clear selected agent when switching to agents view
     if (view === 'agents') {
       setSelectedAgent(null);
+    }
+  };
+
+  const getBackgroundClasses = () => {
+    switch (currentTheme) {
+      case 'professional':
+        return 'bg-gradient-to-br from-gray-100 to-gray-200';
+      case 'dark-professional':
+        return 'bg-gradient-to-br from-gray-800 to-gray-900';
+      case 'minimal':
+        return 'bg-white';
+      default:
+        return 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900';
     }
   };
 
@@ -103,7 +118,7 @@ const Index = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex w-full">
+      <div className={`min-h-screen ${getBackgroundClasses()} flex w-full`}>
         <Sidebar 
           activeView={activeView} 
           onViewChange={handleViewChange}
