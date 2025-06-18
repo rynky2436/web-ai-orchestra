@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ChatPanel } from "@/components/chat/ChatPanel";
@@ -11,6 +10,7 @@ import { OperatorModule } from "@/components/modules/OperatorModule";
 import { BrowserAutomation } from "@/components/modules/BrowserAutomation";
 import { PluginSystem } from "@/components/modules/PluginSystem";
 import { AISwitch } from "@/components/modules/AISwitch";
+import { ProfessionalAI } from "@/components/modules/ProfessionalAI";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 const Index = () => {
@@ -18,6 +18,11 @@ const Index = () => {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 
   const renderMainContent = () => {
+    // Handle new professional AI module
+    if (selectedAgent === 'professional-ai') {
+      return <ProfessionalAI />;
+    }
+    
     // Handle new module views
     if (selectedAgent === 'operator') {
       return <OperatorModule />;
