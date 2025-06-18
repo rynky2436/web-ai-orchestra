@@ -29,6 +29,8 @@ interface SearchResult {
   datePublished?: string;
 }
 
+const PRE_PROMPT = "You are a research assistant AI. You gather and synthesize information from reliable web sources and present summaries.";
+
 export const ResearchTool = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -76,9 +78,10 @@ export const ResearchTool = () => {
     
     try {
       const response = await aiRoutingService.sendMessageWithRouting(
-        `Research: ${searchQuery}`, 
+        `${PRE_PROMPT}\n\nPerform research on: "${searchQuery}" using ${searchEngine} sources with ${contentFilter} content filter.`, 
         { 
           component: 'research_tool',
+          action: 'search',
           searchEngine,
           contentFilter,
           query: searchQuery
@@ -86,8 +89,17 @@ export const ResearchTool = () => {
       );
       
       // Parse response for search results if available
-      if (response.results) {
+      if (response.results && Array.isArray(response.results)) {
         setSearchResults(response.results);
+      } else if (response.content) {
+        // If no structured results, show response in a single result
+        setSearchResults([{
+          title: `Research Results for: ${searchQuery}`,
+          url: '',
+          snippet: response.content,
+          source: 'AI Research Assistant',
+          datePublished: new Date().toISOString().split('T')[0]
+        }]);
       }
     } catch (error) {
       toast({
@@ -95,6 +107,7 @@ export const ResearchTool = () => {
         description: "Unable to perform research. Backend service unavailable.",
         variant: "destructive"
       });
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }
@@ -113,20 +126,73 @@ export const ResearchTool = () => {
     setMessages(prev => [...prev, { role: 'user', content: message }]);
     
     try {
-      const response = await aiRoutingService.sendMessageWithRouting(message, { 
-        component: 'research_tool',
-        context: searchResults.length > 0 ? { searchResults } : {}
-      });
+      const response = await aiRoutingService.sendMessageWithRouting(
+        `${PRE_PROMPT}\n\n${message}`, 
+        { 
+          component: 'research_tool',
+          context: searchResults.length > 0 ? { searchResults } : {},
+          searchQuery: searchQuery || undefined
+        }
+      );
       
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: response.content || "No response received"
+        content: response.content || "No response received from AI backend"
       }]);
     } catch (error) {
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: "Error: Unable to process request. Backend service unavailable."
       }]);
+    }
+  };
+
+  const saveResearch = async () => {
+    if (!isConnected) {
+      toast({
+        title: "Service Unavailable",
+        description: "Save functionality requires backend connection",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (searchResults.length === 0) {
+      toast({
+        title: "No Data to Save",
+        description: "Perform a search first to save results",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const researchData = {
+        query: searchQuery,
+        results: searchResults,
+        timestamp: new Date().toISOString(),
+        searchEngine,
+        contentFilter
+      };
+
+      const blob = new Blob([JSON.stringify(researchData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `research-${searchQuery.replace(/[^a-z0-9]/gi, '_')}-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Research Saved",
+        description: "Research data downloaded successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: "Unable to save research data",
+        variant: "destructive"
+      });
     }
   };
 
@@ -149,7 +215,13 @@ export const ResearchTool = () => {
             </div>
             
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10" disabled={!isConnected}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-white/5 border-white/10 text-white hover:bg-white/10" 
+                onClick={saveResearch}
+                disabled={!isConnected || searchResults.length === 0}
+              >
                 <Database className="w-4 h-4 mr-2" />
                 Save Research
               </Button>
@@ -191,7 +263,7 @@ export const ResearchTool = () => {
                     />
                     <Button 
                       onClick={performSearch}
-                      disabled={isSearching || !isConnected}
+                      disabled={isSearching || !isConnected || !searchQuery.trim()}
                       className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
                     >
                       <Search className="w-4 h-4 mr-2" />
@@ -257,7 +329,19 @@ export const ResearchTool = () => {
                       {searchResults.map((result, index) => (
                         <Card key={index} className="bg-white/5 border-white/10">
                           <CardContent className="p-4">
-                            <h4 className="text-white font-medium mb-2">{result.title}</h4>
+                            <h4 className="text-white font-medium mb-2 flex items-center justify-between">
+                              {result.title}
+                              {result.url && (
+                                <a 
+                                  href={result.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 hover:text-blue-300"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </a>
+                              )}
+                            </h4>
                             <p className="text-gray-300 text-sm mb-2">{result.snippet}</p>
                             <div className="flex items-center justify-between text-xs text-gray-400">
                               <span>{result.source}</span>
@@ -321,7 +405,6 @@ export const ResearchTool = () => {
           messages={messages}
           onSendMessage={handleSendMessage}
           className="h-full"
-          disabled={!isConnected}
         />
       </div>
     </div>

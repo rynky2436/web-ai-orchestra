@@ -22,6 +22,8 @@ interface Message {
   timestamp?: string;
 }
 
+const PRE_PROMPT = "You are a senior AI code engineer. You write, refactor, debug, and explain code based on user goals.";
+
 export const CodeSandbox = () => {
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("javascript");
@@ -63,12 +65,35 @@ export const CodeSandbox = () => {
       return;
     }
 
+    if (!code.trim()) {
+      toast({
+        title: "No Code to Execute",
+        description: "Please write some code first",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsRunning(true);
     try {
-      // This would integrate with actual code execution service
-      setOutput("Code execution service not implemented yet.");
+      const response = await aiRoutingService.sendMessageWithRouting(
+        `${PRE_PROMPT}\n\nExecute this ${language} code:\n\n${code}`, 
+        { 
+          component: 'code_sandbox',
+          action: 'execute',
+          code: code,
+          language: language 
+        }
+      );
+      
+      setOutput(response.content || "Code execution failed - no response from backend");
     } catch (error) {
-      setOutput(`Error: ${error}`);
+      setOutput(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
+      toast({
+        title: "Execution Failed",
+        description: "Unable to execute code. Backend service unavailable.",
+        variant: "destructive"
+      });
     } finally {
       setIsRunning(false);
     }
@@ -87,15 +112,18 @@ export const CodeSandbox = () => {
     setMessages(prev => [...prev, { role: 'user', content: message }]);
     
     try {
-      const response = await aiRoutingService.sendMessageWithRouting(message, { 
-        component: 'code_sandbox',
-        code: code,
-        language: language 
-      });
+      const response = await aiRoutingService.sendMessageWithRouting(
+        `${PRE_PROMPT}\n\n${message}`, 
+        { 
+          component: 'code_sandbox',
+          code: code,
+          language: language 
+        }
+      );
       
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: response.content || "No response received"
+        content: response.content || "No response received from AI backend"
       }]);
     } catch (error) {
       setMessages(prev => [...prev, { 
@@ -225,7 +253,7 @@ export const CodeSandbox = () => {
                 <CardContent>
                   <div className="bg-slate-900 border border-slate-700 rounded-md p-4 min-h-[400px]">
                     <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap">
-                      {output || "No output yet. Run your code to see results."}
+                      {output || (isConnected ? "No output yet. Run your code to see results." : "Backend connection required for code execution.")}
                     </pre>
                   </div>
                 </CardContent>
@@ -260,7 +288,6 @@ export const CodeSandbox = () => {
           messages={messages}
           onSendMessage={handleSendMessage}
           className="h-full"
-          disabled={!isConnected}
         />
       </div>
     </div>
