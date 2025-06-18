@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Settings as SettingsIcon, Brain, Shield, Monitor, Database, Globe, Key, User, Bell, Palette, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,8 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 export const Settings = () => {
+  const { settings, currentTheme, updateSettings, setTheme } = useSettingsStore();
+  
   const [apiKeys, setApiKeys] = useState({
     openai: '',
     anthropic: '',
@@ -53,6 +55,14 @@ export const Settings = () => {
     logAccess: true,
     backupFrequency: 'daily'
   });
+
+  // Load saved settings on component mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('nexus_system_settings');
+    if (savedSettings) {
+      setSystemSettings(JSON.parse(savedSettings));
+    }
+  }, []);
 
   const handleApiKeyChange = (provider: string, value: string) => {
     setApiKeys(prev => ({ ...prev, [provider]: value }));
@@ -96,7 +106,7 @@ export const Settings = () => {
     }
 
     toast({
-      title: "Connection Test Not Available",
+      title: "Connection Test Not Available", 
       description: "API connection testing requires backend integration"
     });
   };
@@ -113,6 +123,14 @@ export const Settings = () => {
     toast({
       title: "Setting Updated",
       description: `${setting} has been updated`
+    });
+  };
+
+  const handleThemeChange = (theme: any) => {
+    setTheme(theme);
+    toast({
+      title: "Theme Updated",
+      description: `Theme changed to ${theme}`
     });
   };
 
@@ -151,6 +169,7 @@ export const Settings = () => {
       systemSettings,
       permissions,
       securitySettings,
+      currentTheme,
       timestamp: new Date().toISOString()
     };
     
@@ -196,9 +215,10 @@ export const Settings = () => {
 
       <div className="p-6">
         <Tabs defaultValue="api-keys" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-white/5 border-white/10">
+          <TabsList className="grid w-full grid-cols-6 bg-white/5 border-white/10">
             <TabsTrigger value="api-keys" className="text-white data-[state=active]:bg-blue-500/20">API Keys</TabsTrigger>
             <TabsTrigger value="ai-models" className="text-white data-[state=active]:bg-blue-500/20">AI Models</TabsTrigger>
+            <TabsTrigger value="theme" className="text-white data-[state=active]:bg-blue-500/20">Theme</TabsTrigger>
             <TabsTrigger value="permissions" className="text-white data-[state=active]:bg-blue-500/20">Permissions</TabsTrigger>
             <TabsTrigger value="security" className="text-white data-[state=active]:bg-blue-500/20">Security</TabsTrigger>
             <TabsTrigger value="system" className="text-white data-[state=active]:bg-blue-500/20">System</TabsTrigger>
@@ -314,6 +334,63 @@ export const Settings = () => {
                     value={systemSettings.temperature}
                     onChange={(e) => handleSystemSettingChange('temperature', parseFloat(e.target.value))}
                     className="w-full mt-2"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="theme" className="mt-6 space-y-6">
+            <Card className="bg-white/5 border-white/10">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                  <Palette className="w-5 h-5 mr-2" />
+                  Theme & Appearance
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label className="text-white text-sm">Application Theme</Label>
+                  <Select value={currentTheme} onValueChange={handleThemeChange}>
+                    <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-white/10">
+                      <SelectItem value="gradient">Gradient (Default)</SelectItem>
+                      <SelectItem value="professional">Professional</SelectItem>
+                      <SelectItem value="dark-professional">Dark Professional</SelectItem>
+                      <SelectItem value="minimal">Minimal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
+                    <p className="text-white text-sm font-medium">Gradient Theme</p>
+                    <p className="text-white/80 text-xs">Modern gradient design</p>
+                  </div>
+                  <div className="p-4 bg-slate-700 rounded-lg">
+                    <p className="text-white text-sm font-medium">Professional Theme</p>
+                    <p className="text-white/80 text-xs">Clean business look</p>
+                  </div>
+                  <div className="p-4 bg-black rounded-lg border border-gray-600">
+                    <p className="text-white text-sm font-medium">Dark Professional</p>
+                    <p className="text-white/80 text-xs">Dark mode focused</p>
+                  </div>
+                  <div className="p-4 bg-gray-100 rounded-lg border">
+                    <p className="text-gray-900 text-sm font-medium">Minimal Theme</p>
+                    <p className="text-gray-600 text-xs">Simple and clean</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-white">Dark Mode</Label>
+                    <p className="text-sm text-gray-400">Use dark theme across the application</p>
+                  </div>
+                  <Switch 
+                    checked={systemSettings.darkMode} 
+                    onCheckedChange={(checked) => handleSystemSettingChange('darkMode', checked)}
                   />
                 </div>
               </CardContent>

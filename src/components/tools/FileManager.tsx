@@ -165,76 +165,78 @@ export const FileManager = () => {
     }
   };
 
+  const [activeTab, setActiveTab] = useState('files');
+
   return (
-    <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 flex flex-col">
-      {/* Header */}
-      <div className="border-b border-white/10 p-4 bg-black/20 backdrop-blur-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-green-500 rounded-lg flex items-center justify-center">
-              <FolderOpen className="w-4 h-4 text-white" />
+    <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 flex">
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <div className="border-b border-white/10 p-4 bg-black/20 backdrop-blur-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-green-500 rounded-lg flex items-center justify-center">
+                <FolderOpen className="w-4 h-4 text-white" />
+              </div>
+              <h2 className="text-xl font-semibold text-white">AI File Manager</h2>
+              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                Intelligent Organization
+              </Badge>
+              {aiMonitoring && (
+                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                  <Monitor className="w-3 h-3 mr-1" />
+                  AI Active
+                </Badge>
+              )}
+              {threatDetection && (
+                <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                  <Shield className="w-3 h-3 mr-1" />
+                  Protected
+                </Badge>
+              )}
             </div>
-            <h2 className="text-xl font-semibold text-white">AI File Manager</h2>
-            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-              Intelligent Organization
-            </Badge>
-            {aiMonitoring && (
-              <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                <Monitor className="w-3 h-3 mr-1" />
-                AI Active
-              </Badge>
-            )}
-            {threatDetection && (
-              <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
-                <Shield className="w-3 h-3 mr-1" />
-                Protected
-              </Badge>
-            )}
+            
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={startAIScan}
+                disabled={isScanning}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                <Brain className="w-4 h-4 mr-2" />
+                {isScanning ? 'AI Scanning...' : 'AI Deep Scan'}
+              </Button>
+              <Button
+                onClick={organizeByAI}
+                className="bg-purple-500 hover:bg-purple-600 text-white"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                AI Organize
+              </Button>
+            </div>
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <Button
-              onClick={startAIScan}
-              disabled={isScanning}
-              className="bg-blue-500 hover:bg-blue-600 text-white"
-            >
-              <Brain className="w-4 h-4 mr-2" />
-              {isScanning ? 'AI Scanning...' : 'AI Deep Scan'}
-            </Button>
-            <Button
-              onClick={organizeByAI}
-              className="bg-purple-500 hover:bg-purple-600 text-white"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              AI Organize
-            </Button>
-          </div>
+
+          {isScanning && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-white">AI Deep Scan Progress</span>
+                <span className="text-sm text-gray-400">{scanProgress}%</span>
+              </div>
+              <Progress value={scanProgress} className="h-2" />
+            </div>
+          )}
         </div>
 
-        {isScanning && (
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-white">AI Deep Scan Progress</span>
-              <span className="text-sm text-gray-400">{scanProgress}%</span>
-            </div>
-            <Progress value={scanProgress} className="h-2" />
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1 flex">
-        {/* Main Content Area */}
-        <div className="flex-1 p-6 overflow-y-auto">
-          <Tabs defaultValue="duplicates" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 bg-white/5 border-white/10">
-              <TabsTrigger value="duplicates" className="text-white data-[state=active]:bg-blue-500/20">Duplicates</TabsTrigger>
-              <TabsTrigger value="threats" className="text-white data-[state=active]:bg-blue-500/20">Security</TabsTrigger>
-              <TabsTrigger value="organize" className="text-white data-[state=active]:bg-blue-500/20">AI Organize</TabsTrigger>
-              <TabsTrigger value="analytics" className="text-white data-[state=active]:bg-blue-500/20">Analytics</TabsTrigger>
+        {/* Main Content */}
+        <div className="flex-1 overflow-hidden">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-4 bg-white/5 border-white/10 mx-4 mt-4">
+              <TabsTrigger value="files" className="text-white data-[state=active]:bg-blue-500/20">Files</TabsTrigger>
+              <TabsTrigger value="operations" className="text-white data-[state=active]:bg-blue-500/20">Operations</TabsTrigger>
+              <TabsTrigger value="ai-tools" className="text-white data-[state=active]:bg-blue-500/20">AI Tools</TabsTrigger>
               <TabsTrigger value="settings" className="text-white data-[state=active]:bg-blue-500/20">AI Settings</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="duplicates" className="mt-6 space-y-4">
+            {/* Files Tab */}
+            <TabsContent value="files" className="flex-1 p-4 overflow-y-auto">
               {selectedFiles.length > 0 && (
                 <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
                   <div className="flex items-center justify-between">
@@ -321,45 +323,8 @@ export const FileManager = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="threats" className="mt-6 space-y-6">
-              <Card className="bg-white/5 border-white/10">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center">
-                    <Shield className="w-5 h-5 mr-2 text-red-400" />
-                    AI Security Analysis
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-red-500/10 rounded-lg border border-red-500/20">
-                      <div className="text-2xl font-bold text-red-400">--</div>
-                      <div className="text-sm text-gray-400">Threats Detected</div>
-                    </div>
-                    <div className="text-center p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-                      <div className="text-2xl font-bold text-yellow-400">--</div>
-                      <div className="text-sm text-gray-400">Suspicious Files</div>
-                    </div>
-                    <div className="text-center p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-                      <div className="text-2xl font-bold text-green-400">--</div>
-                      <div className="text-sm text-gray-400">Protected Data</div>
-                    </div>
-                  </div>
-                  
-                  <Button onClick={handleThreatAnalysis} className="w-full bg-red-500 hover:bg-red-600 text-white" disabled>
-                    <Shield className="w-4 h-4 mr-2" />
-                    Run Security Scan (Not Available)
-                  </Button>
-                  
-                  <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
-                    <p className="text-red-400 text-sm">
-                      ⚠️ Security scanning requires backend integration with antivirus and threat detection services
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="organize" className="mt-6 space-y-6">
+            {/* Operations Tab */}
+            <TabsContent value="operations" className="flex-1 p-4 overflow-y-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="bg-white/5 border-white/10">
                   <CardHeader>
@@ -409,7 +374,8 @@ export const FileManager = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="analytics" className="mt-6 space-y-6">
+            {/* AI Tools Tab */}
+            <TabsContent value="ai-tools" className="flex-1 p-4 overflow-y-auto">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="bg-white/5 border-white/10">
                   <CardHeader>
@@ -449,7 +415,8 @@ export const FileManager = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="settings" className="mt-6 space-y-6">
+            {/* Settings Tab */}
+            <TabsContent value="settings" className="flex-1 p-4 overflow-y-auto">
               <Card className="bg-white/5 border-white/10">
                 <CardHeader>
                   <CardTitle className="text-white">AI Configuration</CardTitle>
@@ -528,18 +495,17 @@ export const FileManager = () => {
             </TabsContent>
           </Tabs>
         </div>
+      </div>
 
-        {/* Standardized AI Chat Interface */}
-        <div className="w-96 border-l border-white/10">
-          <AIChat
-            title="File Management AI"
-            placeholder="File management AI is not yet connected..."
-            initialMessage="Hello! I'm your AI file manager. Currently, I'm not connected to backend services, so I can't provide real file management capabilities yet."
-            onSendMessage={handleAIMessage}
-            className="h-full"
-            disabled={true}
-          />
-        </div>
+      {/* AI Chat Panel */}
+      <div className="w-96">
+        <AIChat
+          title="File Management AI"
+          placeholder="Backend AI integration required for functionality"
+          initialMessage="File management AI requires backend integration to function. Please configure API connections in settings."
+          onSendMessage={handleAIMessage}
+          className="h-full"
+        />
       </div>
     </div>
   );

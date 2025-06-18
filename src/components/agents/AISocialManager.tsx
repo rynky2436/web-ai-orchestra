@@ -1,541 +1,180 @@
-
-import { useState, useEffect } from "react";
-import { MessageSquare, Users, TrendingUp, Calendar, Settings, Shield, Brain, Monitor, Globe, Camera, Video, Heart, Share2, Eye } from "lucide-react";
+import { useState } from "react";
+import { Play, Save, FileCode, Terminal, Brain, Settings, Monitor, Shield, Cloud, Download, Upload, Users, ListChecks, BarChartBig } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AIChat } from "@/components/shared/AIChat";
+import { ChatInterface, AIChat } from "@/components/shared/ChatInterface";
 import { toast } from "@/hooks/use-toast";
 
-interface BaseSocialAccount {
-  platform: string;
-  isConnected: boolean;
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: string;
 }
-
-interface TwitterAccount extends BaseSocialAccount {
-  platform: 'twitter';
-  username: string;
-  password: string;
-  apiKey: string;
-  apiSecret: string;
-  accessToken: string;
-  accessTokenSecret: string;
-}
-
-interface InstagramAccount extends BaseSocialAccount {
-  platform: 'instagram';
-  username: string;
-  password: string;
-  accessToken: string;
-  clientId: string;
-  clientSecret: string;
-}
-
-interface LinkedInAccount extends BaseSocialAccount {
-  platform: 'linkedin';
-  email: string;
-  password: string;
-  clientId: string;
-  clientSecret: string;
-  accessToken: string;
-}
-
-interface FacebookAccount extends BaseSocialAccount {
-  platform: 'facebook';
-  username: string;
-  password: string;
-  appId: string;
-  appSecret: string;
-  accessToken: string;
-}
-
-interface TikTokAccount extends BaseSocialAccount {
-  platform: 'tiktok';
-  username: string;
-  password: string;
-  clientKey: string;
-  clientSecret: string;
-  accessToken: string;
-}
-
-interface YouTubeAccount extends BaseSocialAccount {
-  platform: 'youtube';
-  email: string;
-  password: string;
-  apiKey: string;
-  clientId: string;
-  clientSecret: string;
-}
-
-interface RedditAccount extends BaseSocialAccount {
-  platform: 'reddit';
-  username: string;
-  password: string;
-  clientId: string;
-  clientSecret: string;
-  accessToken: string;
-}
-
-interface PinterestAccount extends BaseSocialAccount {
-  platform: 'pinterest';
-  email: string;
-  password: string;
-  appId: string;
-  appSecret: string;
-  accessToken: string;
-}
-
-interface SnapchatAccount extends BaseSocialAccount {
-  platform: 'snapchat';
-  username: string;
-  password: string;
-  clientId: string;
-  clientSecret: string;
-}
-
-interface DiscordAccount extends BaseSocialAccount {
-  platform: 'discord';
-  username: string;
-  password: string;
-  botToken: string;
-  clientId: string;
-  guildId: string;
-}
-
-interface TelegramAccount extends BaseSocialAccount {
-  platform: 'telegram';
-  botToken: string;
-  chatId: string;
-  apiHash: string;
-}
-
-interface WhatsAppAccount extends BaseSocialAccount {
-  platform: 'whatsapp';
-  phoneNumber: string;
-  apiKey: string;
-  webhookUrl: string;
-}
-
-type SocialAccount = TwitterAccount | InstagramAccount | LinkedInAccount | FacebookAccount | 
-                   TikTokAccount | YouTubeAccount | RedditAccount | PinterestAccount | 
-                   SnapchatAccount | DiscordAccount | TelegramAccount | WhatsAppAccount;
 
 export const AISocialManager = () => {
-  const [activeTab, setActiveTab] = useState("accounts");
-  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([
-    { platform: 'twitter', isConnected: false, username: '', password: '', apiKey: '', apiSecret: '', accessToken: '', accessTokenSecret: '' },
-    { platform: 'instagram', isConnected: false, username: '', password: '', accessToken: '', clientId: '', clientSecret: '' },
-    { platform: 'linkedin', isConnected: false, email: '', password: '', clientId: '', clientSecret: '', accessToken: '' },
-    { platform: 'facebook', isConnected: false, username: '', password: '', appId: '', appSecret: '', accessToken: '' },
-    { platform: 'tiktok', isConnected: false, username: '', password: '', clientKey: '', clientSecret: '', accessToken: '' },
-    { platform: 'youtube', isConnected: false, email: '', password: '', apiKey: '', clientId: '', clientSecret: '' },
-    { platform: 'reddit', isConnected: false, username: '', password: '', clientId: '', clientSecret: '', accessToken: '' },
-    { platform: 'pinterest', isConnected: false, email: '', password: '', appId: '', appSecret: '', accessToken: '' },
-    { platform: 'snapchat', isConnected: false, username: '', password: '', clientId: '', clientSecret: '' },
-    { platform: 'discord', isConnected: false, username: '', password: '', botToken: '', clientId: '', guildId: '' },
-    { platform: 'telegram', isConnected: false, botToken: '', chatId: '', apiHash: '' },
-    { platform: 'whatsapp', isConnected: false, phoneNumber: '', apiKey: '', webhookUrl: '' }
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [accounts, setAccounts] = useState([
+    { id: 1, name: "Twitter", username: "@NexusAI", followers: 12000, status: "active" },
+    { id: 2, name: "Facebook", username: "NexusAI", followers: 25000, status: "active" },
+    { id: 3, name: "Instagram", username: "@nexusai", followers: 18000, status: "inactive" }
+  ]);
+  const [posts, setPosts] = useState([
+    { id: 1, date: "2024-05-03", content: "Exciting news about our latest AI advancements!", likes: 320, shares: 150 },
+    { id: 2, date: "2024-05-02", content: "Check out our new blog post on AI ethics.", likes: 250, shares: 90 },
+    { id: 3, date: "2024-05-01", content: "Join us for a live webinar on AI in healthcare.", likes: 450, shares: 200 }
   ]);
 
-  const [aiSettings, setAiSettings] = useState({
-    autoPost: false,
-    contentGeneration: false,
-    sentimentAnalysis: false,
-    engagement: false,
-    scheduling: false
-  });
-
-  const [postContent, setPostContent] = useState("");
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-
-  const handleAccountUpdate = (platform: string, field: string, value: string) => {
-    setSocialAccounts(prev => prev.map(account => 
-      account.platform === platform 
-        ? { ...account, [field]: value }
-        : account
-    ));
-  };
-
-  const connectAccount = (platform: string) => {
-    const account = socialAccounts.find(acc => acc.platform === platform);
-    if (!account) return;
-
-    // Check if account has required credentials
-    const hasRequiredCredentials = (() => {
-      switch (platform) {
-        case 'twitter':
-          const twitterAcc = account as TwitterAccount;
-          return twitterAcc.username && twitterAcc.password && twitterAcc.apiKey && twitterAcc.apiSecret;
-        case 'instagram':
-          const instaAcc = account as InstagramAccount;
-          return instaAcc.username && instaAcc.password && instaAcc.clientId;
-        case 'telegram':
-          const telegramAcc = account as TelegramAccount;
-          return telegramAcc.botToken && telegramAcc.chatId;
-        default:
-          return false;
-      }
-    })();
-
-    if (!hasRequiredCredentials) {
-      toast({
-        title: "Missing Credentials",
-        description: `Please fill in all required fields for ${platform}`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Real connection logic would go here
-    toast({
-      title: "Connection Not Implemented",
-      description: `${platform} integration is not yet connected to backend services`,
-      variant: "destructive"
-    });
-  };
-
-  const schedulePost = () => {
-    if (!postContent.trim()) {
-      toast({
-        title: "No Content",
-        description: "Please enter content to post",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (selectedPlatforms.length === 0) {
-      toast({
-        title: "No Platforms Selected",
-        description: "Please select at least one platform",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: "Feature Not Available",
-      description: "Post scheduling is not yet connected to backend services",
-      variant: "destructive"
-    });
-  };
-
-  const handleAIMessage = (message: string) => {
-    toast({
-      title: "AI Assistant Not Connected",
-      description: "AI chat functionality requires backend integration",
-      variant: "destructive"
-    });
-  };
-
-  const getPlatformDisplayName = (platform: string) => {
-    const names: { [key: string]: string } = {
-      twitter: "Twitter/X",
-      instagram: "Instagram",
-      linkedin: "LinkedIn",
-      facebook: "Facebook",
-      tiktok: "TikTok",
-      youtube: "YouTube",
-      reddit: "Reddit",
-      pinterest: "Pinterest",
-      snapchat: "Snapchat",
-      discord: "Discord",
-      telegram: "Telegram",
-      whatsapp: "WhatsApp"
-    };
-    return names[platform] || platform;
-  };
-
-  const renderAccountFields = (account: SocialAccount) => {
-    const commonFields = (
-      <>
-        {'username' in account && (
-          <div>
-            <Label className="text-white text-sm">Username</Label>
-            <Input
-              value={account.username}
-              onChange={(e) => handleAccountUpdate(account.platform, 'username', e.target.value)}
-              className="mt-1 bg-white/5 border-white/10 text-white"
-              placeholder="Enter username"
-            />
-          </div>
-        )}
-        {'email' in account && (
-          <div>
-            <Label className="text-white text-sm">Email</Label>
-            <Input
-              value={account.email}
-              onChange={(e) => handleAccountUpdate(account.platform, 'email', e.target.value)}
-              className="mt-1 bg-white/5 border-white/10 text-white"
-              placeholder="Enter email"
-            />
-          </div>
-        )}
-        {'password' in account && (
-          <div>
-            <Label className="text-white text-sm">Password</Label>
-            <Input
-              type="password"
-              value={account.password}
-              onChange={(e) => handleAccountUpdate(account.platform, 'password', e.target.value)}
-              className="mt-1 bg-white/5 border-white/10 text-white"
-              placeholder="Enter password"
-            />
-          </div>
-        )}
-      </>
-    );
-
-    switch (account.platform) {
-      case 'twitter':
-        const twitterAcc = account as TwitterAccount;
-        return (
-          <div className="space-y-4">
-            {commonFields}
-            <div>
-              <Label className="text-white text-sm">API Key</Label>
-              <Input
-                value={twitterAcc.apiKey}
-                onChange={(e) => handleAccountUpdate(account.platform, 'apiKey', e.target.value)}
-                className="mt-1 bg-white/5 border-white/10 text-white"
-                placeholder="Enter API key"
-              />
-            </div>
-            <div>
-              <Label className="text-white text-sm">API Secret</Label>
-              <Input
-                type="password"
-                value={twitterAcc.apiSecret}
-                onChange={(e) => handleAccountUpdate(account.platform, 'apiSecret', e.target.value)}
-                className="mt-1 bg-white/5 border-white/10 text-white"
-                placeholder="Enter API secret"
-              />
-            </div>
-          </div>
-        );
-
-      case 'telegram':
-        const telegramAcc = account as TelegramAccount;
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label className="text-white text-sm">Bot Token</Label>
-              <Input
-                value={telegramAcc.botToken}
-                onChange={(e) => handleAccountUpdate(account.platform, 'botToken', e.target.value)}
-                className="mt-1 bg-white/5 border-white/10 text-white"
-                placeholder="Enter bot token"
-              />
-            </div>
-            <div>
-              <Label className="text-white text-sm">Chat ID</Label>
-              <Input
-                value={telegramAcc.chatId}
-                onChange={(e) => handleAccountUpdate(account.platform, 'chatId', e.target.value)}
-                className="mt-1 bg-white/5 border-white/10 text-white"
-                placeholder="Enter chat ID"
-              />
-            </div>
-          </div>
-        );
-
-      default:
-        return commonFields;
-    }
+  const handleSendMessage = (message: string) => {
+    setMessages(prev => [...prev, { role: 'user', content: message }]);
+    
+    setTimeout(() => {
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: "AI assistant is not yet connected to backend services. Social media assistance features require proper integration to function." 
+      }]);
+    }, 1000);
   };
 
   return (
     <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 flex">
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col">
         {/* Header */}
         <div className="border-b border-white/10 p-4 bg-black/20 backdrop-blur-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg flex items-center justify-center">
-                <MessageSquare className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                <Users className="w-4 h-4 text-white" />
               </div>
-              <h2 className="text-xl font-semibold text-white">AI Social Media Manager</h2>
-              <Badge className="bg-pink-500/20 text-pink-400 border-pink-500/30">
-                Multi-Platform
+              <h2 className="text-xl font-semibold text-white">AI Social Manager</h2>
+              <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                Connected
               </Badge>
+              <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                <Brain className="w-3 h-3 mr-1" />
+                AI (Not Connected)
+              </Badge>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10" disabled>
+                <Brain className="w-4 h-4 mr-2" />
+                AI Analyze
+              </Button>
+              <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10" disabled>
+                <Save className="w-4 h-4 mr-2" />
+                Save
+              </Button>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-6 overflow-y-auto">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-white/5 border-white/10">
+        <div className="flex-1 overflow-hidden">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-4 bg-white/5 border-white/10 mx-4 mt-4">
+              <TabsTrigger value="dashboard" className="text-white data-[state=active]:bg-blue-500/20">Dashboard</TabsTrigger>
               <TabsTrigger value="accounts" className="text-white data-[state=active]:bg-blue-500/20">Accounts</TabsTrigger>
-              <TabsTrigger value="compose" className="text-white data-[state=active]:bg-blue-500/20">Compose</TabsTrigger>
+              <TabsTrigger value="posts" className="text-white data-[state=active]:bg-blue-500/20">Posts</TabsTrigger>
               <TabsTrigger value="analytics" className="text-white data-[state=active]:bg-blue-500/20">Analytics</TabsTrigger>
-              <TabsTrigger value="settings" className="text-white data-[state=active]:bg-blue-500/20">AI Settings</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="accounts" className="mt-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {socialAccounts.map((account) => (
-                  <Card key={account.platform} className="bg-white/5 border-white/10">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-white text-lg">
-                          {getPlatformDisplayName(account.platform)}
-                        </CardTitle>
-                        <Badge 
-                          variant={account.isConnected ? "default" : "outline"}
-                          className={account.isConnected ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
-                        >
-                          {account.isConnected ? "Connected" : "Disconnected"}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {renderAccountFields(account)}
-                      <Button
-                        onClick={() => connectAccount(account.platform)}
-                        className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-                        disabled={account.isConnected}
-                      >
-                        {account.isConnected ? "Connected" : "Connect Account"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="compose" className="mt-6 space-y-6">
+            {/* Dashboard Tab */}
+            <TabsContent value="dashboard" className="flex-1 p-4 overflow-y-auto">
               <Card className="bg-white/5 border-white/10">
                 <CardHeader>
-                  <CardTitle className="text-white">Create Post</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label className="text-white text-sm">Content</Label>
-                    <Textarea
-                      value={postContent}
-                      onChange={(e) => setPostContent(e.target.value)}
-                      className="mt-1 bg-white/5 border-white/10 text-white min-h-[120px]"
-                      placeholder="What's on your mind?"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-white text-sm">Select Platforms</Label>
-                    <div className="mt-2 grid grid-cols-3 gap-2">
-                      {socialAccounts.slice(0, 6).map((account) => (
-                        <div key={account.platform} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id={account.platform}
-                            checked={selectedPlatforms.includes(account.platform)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedPlatforms(prev => [...prev, account.platform]);
-                              } else {
-                                setSelectedPlatforms(prev => prev.filter(p => p !== account.platform));
-                              }
-                            }}
-                            className="rounded"
-                            disabled={!account.isConnected}
-                          />
-                          <Label htmlFor={account.platform} className="text-white text-sm">
-                            {getPlatformDisplayName(account.platform)}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <Button
-                      onClick={schedulePost}
-                      className="bg-purple-500 hover:bg-purple-600 text-white"
-                      disabled={!postContent.trim() || selectedPlatforms.length === 0}
-                    >
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Schedule Post
-                    </Button>
-                    <Button
-                      onClick={schedulePost}
-                      className="bg-green-500 hover:bg-green-600 text-white"
-                      disabled={!postContent.trim() || selectedPlatforms.length === 0}
-                    >
-                      <Share2 className="w-4 h-4 mr-2" />
-                      Post Now
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="analytics" className="mt-6">
-              <Card className="bg-white/5 border-white/10">
-                <CardHeader>
-                  <CardTitle className="text-white">Analytics Dashboard</CardTitle>
+                  <CardTitle className="text-white">Dashboard Overview</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-12">
-                    <TrendingUp className="w-16 h-16 mx-auto mb-4 text-gray-400 opacity-50" />
-                    <p className="text-gray-400">Analytics features require connected accounts and backend integration</p>
-                  </div>
+                  <p className="text-white/80">View a summary of your social media performance.</p>
+                  <ListChecks className="w-12 h-12 text-green-500 mx-auto my-4" />
+                  <p className="text-center text-gray-400">Connect accounts to view detailed analytics</p>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="settings" className="mt-6">
+            {/* Accounts Tab */}
+            <TabsContent value="accounts" className="flex-1 p-4 overflow-y-auto">
               <Card className="bg-white/5 border-white/10">
                 <CardHeader>
-                  <CardTitle className="text-white">AI Settings</CardTitle>
+                  <CardTitle className="text-white">Connected Accounts</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-white">Auto-posting</Label>
-                        <p className="text-sm text-gray-400">Enable AI to automatically create and schedule posts</p>
-                      </div>
-                      <Switch 
-                        checked={aiSettings.autoPost} 
-                        onCheckedChange={(checked) => setAiSettings(prev => ({ ...prev, autoPost: checked }))}
-                        disabled={true}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-white">Content Generation</Label>
-                        <p className="text-sm text-gray-400">AI-powered content creation</p>
-                      </div>
-                      <Switch 
-                        checked={aiSettings.contentGeneration} 
-                        onCheckedChange={(checked) => setAiSettings(prev => ({ ...prev, contentGeneration: checked }))}
-                        disabled={true}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-white">Sentiment Analysis</Label>
-                        <p className="text-sm text-gray-400">Monitor brand sentiment across platforms</p>
-                      </div>
-                      <Switch 
-                        checked={aiSettings.sentimentAnalysis} 
-                        onCheckedChange={(checked) => setAiSettings(prev => ({ ...prev, sentimentAnalysis: checked }))}
-                        disabled={true}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
-                    <p className="text-yellow-400 text-sm">
-                      ⚠️ AI features require backend integration and API connections to function
-                    </p>
-                  </div>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {accounts.map(account => (
+                      <li key={account.id} className="flex items-center justify-between p-2 rounded-md bg-black/20">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-white">{account.name}</span>
+                          <span className="text-gray-400">{account.username}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30">{account.followers} Followers</Badge>
+                          <Badge className={account.status === 'active' ? "bg-blue-500/20 text-blue-400 border-blue-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}>
+                            {account.status === 'active' ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button variant="outline" className="w-full mt-4 bg-white/5 border-white/10 text-white hover:bg-white/10">
+                    Connect New Account
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Posts Tab */}
+            <TabsContent value="posts" className="flex-1 p-4 overflow-y-auto">
+              <Card className="bg-white/5 border-white/10">
+                <CardHeader>
+                  <CardTitle className="text-white">Recent Posts</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-4">
+                    {posts.map(post => (
+                      <li key={post.id} className="p-4 rounded-md bg-black/20">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-white">{post.date}</span>
+                          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Scheduled</Badge>
+                        </div>
+                        <p className="text-gray-400">{post.content}</p>
+                        <div className="flex items-center justify-end mt-3 space-x-4">
+                          <Button variant="ghost" size="sm" className="text-blue-400 hover:bg-blue-500/10">
+                            <FileCode className="w-4 h-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-400 hover:bg-red-500/10">
+                            <Terminal className="w-4 h-4 mr-2" />
+                            Delete
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button variant="outline" className="w-full mt-4 bg-white/5 border-white/10 text-white hover:bg-white/10">
+                    Create New Post
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Analytics Tab */}
+            <TabsContent value="analytics" className="flex-1 p-4 overflow-y-auto">
+              <Card className="bg-white/5 border-white/10">
+                <CardHeader>
+                  <CardTitle className="text-white">Analytics Overview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-white/80">Track your social media performance and engagement.</p>
+                  <BarChartBig className="w-12 h-12 text-purple-500 mx-auto my-4" />
+                  <p className="text-center text-gray-400">Detailed analytics require connected accounts</p>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -543,15 +182,14 @@ export const AISocialManager = () => {
         </div>
       </div>
 
-      {/* AI Chat Sidebar */}
-      <div className="w-96 border-l border-white/10">
+      {/* AI Chat Panel */}
+      <div className="w-96">
         <AIChat
           title="Social Media AI"
-          placeholder="Social media AI assistant is not yet connected..."
-          initialMessage="Hello! I'm your social media AI assistant. Currently, I'm not connected to backend services, so I can't provide real responses yet."
-          onSendMessage={handleAIMessage}
+          placeholder="Backend AI integration required for functionality"
+          initialMessage="Social media AI assistant requires backend integration to function. Please configure API connections in settings."
+          onSendMessage={handleSendMessage}
           className="h-full"
-          disabled={true}
         />
       </div>
     </div>
