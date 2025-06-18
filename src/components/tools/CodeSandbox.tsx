@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Play, Save, FileCode, Terminal, Brain, Settings, Monitor, Shield, Cloud, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,172 +44,57 @@ console.log(greet("Developer"));`);
     documentation: false
   });
 
-  // AI monitoring for code quality
+  // AI monitoring for code quality - disabled since not functional
   useEffect(() => {
     if (codeAnalysis && code.length > 10) {
-      const analyzeCode = setTimeout(() => {
-        console.log('AI analyzing code quality...');
-        // Simulate AI code analysis
-      }, 2000);
-
-      return () => clearTimeout(analyzeCode);
+      // Removed fake analysis timeout
+      console.log('Code analysis would happen here with backend integration');
     }
   }, [code, codeAnalysis]);
 
   const runCode = async () => {
     setIsRunning(true);
-    try {
-      toast({
-        title: "Executing Code",
-        description: "AI is analyzing and running your code..."
-      });
-
-      // Simulate code execution with AI analysis
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      let result = "";
-      if (language === "javascript") {
-        try {
-          // Simulate JavaScript execution
-          result = "Code executed successfully!\n\nHello, Developer! Welcome to NexusAI.";
-          if (code.includes("console.log")) {
-            result += "\n\nConsole output detected and captured.";
-          }
-        } catch (error) {
-          result = `Error: ${error}`;
-        }
-      } else if (language === "python") {
-        result = "Python code executed successfully!\nOutput: Hello from Python!";
-      } else if (language === "html") {
-        result = "HTML rendered successfully in preview panel.";
-      }
-
-      setOutput(result);
-      
-      if (securityScan) {
-        setTimeout(() => {
-          toast({
-            title: "Security Scan Complete",
-            description: "No security vulnerabilities detected"
-          });
-        }, 1500);
-      }
-
-    } catch (error) {
-      setOutput(`Error: ${error}`);
-    } finally {
-      setIsRunning(false);
-    }
+    
+    toast({
+      title: "Code Execution Not Available",
+      description: "Code execution requires backend integration with secure sandboxing environment"
+    });
+    
+    setIsRunning(false);
   };
 
   const analyzeCodeWithAI = async () => {
     toast({
-      title: "AI Code Analysis",
-      description: "Analyzing code quality, performance, and security..."
+      title: "AI Analysis Not Available",
+      description: "Code analysis requires backend AI integration to function properly"
     });
-
-    setTimeout(() => {
-      const analysis = `AI Analysis Report:
-✅ Syntax: Valid
-✅ Best Practices: Good
-⚠️  Performance: Consider optimization
-✅ Security: No vulnerabilities found
-📝 Suggestions: Add error handling`;
-
-      setOutput(analysis);
-      toast({
-        title: "Analysis Complete",
-        description: "Code analysis report generated"
-      });
-    }, 2000);
   };
 
   const optimizeCode = async () => {
     if (!code.trim()) return;
 
     toast({
-      title: "AI Optimization",
-      description: "Optimizing your code for better performance..."
+      title: "Code Optimization Not Available",
+      description: "Code optimization requires backend AI integration to function properly"
     });
-
-    setTimeout(() => {
-      const optimizedCode = `// AI-Optimized Code
-function greet(name) {
-  // Added input validation
-  if (!name || typeof name !== 'string') {
-    throw new Error('Invalid name parameter');
-  }
-  
-  return \`Hello, \${name.trim()}! Welcome to NexusAI.\`;
-}
-
-try {
-  console.log(greet("Developer"));
-} catch (error) {
-  console.error('Error:', error.message);
-}`;
-
-      setCode(optimizedCode);
-      toast({
-        title: "Code Optimized",
-        description: "AI has improved your code with best practices"
-      });
-    }, 2000);
   };
 
   const generateDocumentation = () => {
     toast({
-      title: "Generating Documentation",
-      description: "AI is creating comprehensive documentation..."
+      title: "Documentation Generation Not Available",
+      description: "Documentation generation requires backend AI integration to function properly"
     });
-
-    setTimeout(() => {
-      const docs = `/**
- * Greet Function Documentation
- * 
- * @description A function that creates a personalized greeting message
- * @param {string} name - The name of the person to greet
- * @returns {string} A formatted greeting message
- * @throws {Error} If name is not a valid string
- * 
- * @example
- * const message = greet("Alice");
- * console.log(message); // "Hello, Alice! Welcome to NexusAI."
- */`;
-
-      setOutput(docs);
-      toast({
-        title: "Documentation Generated",
-        description: "AI has created detailed documentation"
-      });
-    }, 1500);
   };
 
   const handleSendMessage = (message: string) => {
     setMessages(prev => [...prev, { role: 'user', content: message }]);
     
-    // AI assistant logic
+    // Removed fake AI responses
     setTimeout(() => {
-      let response = "I can help you with that! ";
-      
-      if (message.toLowerCase().includes('optimize')) {
-        response = "I'll optimize your code for better performance and readability. Let me analyze it...";
-        optimizeCode();
-      } else if (message.toLowerCase().includes('analyze') || message.toLowerCase().includes('review')) {
-        response = "I'll perform a comprehensive code analysis including security, performance, and best practices.";
-        analyzeCodeWithAI();
-      } else if (message.toLowerCase().includes('document')) {
-        response = "I'll generate detailed documentation for your code including examples and usage notes.";
-        generateDocumentation();
-      } else if (message.toLowerCase().includes('debug') || message.toLowerCase().includes('error')) {
-        response = "I'll help you debug the code. Let me check for common issues and suggest fixes.";
-      } else if (message.toLowerCase().includes('explain')) {
-        response = "I'll explain how your code works and what each part does. This helps improve understanding.";
-      } else {
-        response += "I can help with code optimization, debugging, analysis, documentation, and explanations. What would you like me to focus on?";
-      }
-      
-      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: "AI assistant is not yet connected to backend services. Code assistance features require proper integration to function." 
+      }]);
     }, 1000);
   };
 
@@ -246,13 +130,13 @@ try {
               {aiAssistanceEnabled && (
                 <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
                   <Brain className="w-3 h-3 mr-1" />
-                  AI Active
+                  AI (Not Connected)
                 </Badge>
               )}
             </div>
             
             <div className="flex items-center space-x-2">
-              <Button onClick={analyzeCodeWithAI} variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+              <Button onClick={analyzeCodeWithAI} variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10" disabled>
                 <Brain className="w-4 h-4 mr-2" />
                 AI Analyze
               </Button>
@@ -267,7 +151,7 @@ try {
                 size="sm"
               >
                 <Play className="w-4 h-4 mr-2" />
-                {isRunning ? "Running..." : "Run"}
+                {isRunning ? "Running..." : "Run (Not Available)"}
               </Button>
             </div>
           </div>
@@ -326,7 +210,7 @@ try {
                 <CardContent>
                   <div className="bg-slate-900 border border-slate-700 rounded-md p-4 min-h-[400px]">
                     <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap">
-                      {output || "No output yet. Run your code to see results."}
+                      {output || "Code execution requires backend integration. No output available yet."}
                     </pre>
                   </div>
                 </CardContent>
@@ -340,17 +224,17 @@ try {
                     <CardTitle className="text-white text-sm">AI Code Enhancement</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <Button onClick={optimizeCode} className="w-full bg-purple-500 hover:bg-purple-600 text-white">
+                    <Button onClick={optimizeCode} className="w-full bg-purple-500 hover:bg-purple-600 text-white" disabled>
                       <Brain className="w-4 h-4 mr-2" />
-                      Optimize Code
+                      Optimize Code (Not Available)
                     </Button>
-                    <Button onClick={analyzeCodeWithAI} className="w-full bg-blue-500 hover:bg-blue-600 text-white">
+                    <Button onClick={analyzeCodeWithAI} className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled>
                       <Monitor className="w-4 h-4 mr-2" />
-                      Security Scan
+                      Security Scan (Not Available)
                     </Button>
-                    <Button onClick={generateDocumentation} className="w-full bg-green-500 hover:bg-green-600 text-white">
+                    <Button onClick={generateDocumentation} className="w-full bg-green-500 hover:bg-green-600 text-white" disabled>
                       <FileCode className="w-4 h-4 mr-2" />
-                      Generate Docs
+                      Generate Docs (Not Available)
                     </Button>
                   </CardContent>
                 </Card>
@@ -368,12 +252,18 @@ try {
                         className="mt-1 bg-white/5 border-white/10 text-white"
                       />
                     </div>
-                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white">
+                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" disabled>
                       <Cloud className="w-4 h-4 mr-2" />
-                      Save to Cloud
+                      Save to Cloud (Not Available)
                     </Button>
                   </CardContent>
                 </Card>
+              </div>
+              
+              <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
+                <p className="text-red-400 text-sm">
+                  ⚠️ AI code enhancement features require backend integration with AI services and secure code execution environments
+                </p>
               </div>
             </TabsContent>
 
@@ -385,24 +275,24 @@ try {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label className="text-white">Enable AI Assistance</Label>
-                    <Switch checked={aiAssistanceEnabled} onCheckedChange={setAiAssistanceEnabled} />
+                    <Switch checked={aiAssistanceEnabled} onCheckedChange={setAiAssistanceEnabled} disabled />
                   </div>
                   <div className="flex items-center justify-between">
                     <Label className="text-white">Auto-complete Suggestions</Label>
-                    <Switch checked={autoComplete} onCheckedChange={setAutoComplete} />
+                    <Switch checked={autoComplete} onCheckedChange={setAutoComplete} disabled />
                   </div>
                   <div className="flex items-center justify-between">
                     <Label className="text-white">Real-time Code Analysis</Label>
-                    <Switch checked={codeAnalysis} onCheckedChange={setCodeAnalysis} />
+                    <Switch checked={codeAnalysis} onCheckedChange={setCodeAnalysis} disabled />
                   </div>
                   <div className="flex items-center justify-between">
                     <Label className="text-white">Security Scanning</Label>
-                    <Switch checked={securityScan} onCheckedChange={setSecurityScan} />
+                    <Switch checked={securityScan} onCheckedChange={setSecurityScan} disabled />
                   </div>
                   
                   <div className="pt-4 border-t border-white/10">
                     <Label className="text-white text-sm">AI Model</Label>
-                    <Select value={aiSettings.model} onValueChange={(value) => setAiSettings(prev => ({ ...prev, model: value }))}>
+                    <Select value={aiSettings.model} onValueChange={(value) => setAiSettings(prev => ({ ...prev, model: value }))} disabled>
                       <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
                         <SelectValue />
                       </SelectTrigger>
@@ -412,6 +302,12 @@ try {
                         <SelectItem value="codellama">CodeLlama</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  
+                  <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+                    <p className="text-yellow-400 text-sm">
+                      ⚠️ AI assistant features are disabled until backend integration is complete
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -424,7 +320,7 @@ try {
       <div className="w-96">
         <ChatInterface
           title="Code Assistant AI"
-          placeholder="Ask me to optimize, debug, analyze, or explain your code..."
+          placeholder="Code assistant AI is not yet connected..."
           messages={messages}
           onSendMessage={handleSendMessage}
           className="h-full"

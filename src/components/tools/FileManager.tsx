@@ -100,75 +100,52 @@ export const FileManager = () => {
     setScanProgress(0);
     
     toast({
-      title: "AI Scan Started",
-      description: "Advanced AI analysis in progress..."
+      title: "Feature Not Available",
+      description: "AI scanning requires backend integration to function properly"
     });
     
-    const interval = setInterval(() => {
-      setScanProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsScanning(false);
-          toast({
-            title: "AI Scan Complete",
-            description: "Found 15 duplicates, 3 security threats, and 24 optimization opportunities"
-          });
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 500);
+    // Reset scanning state immediately since it's not functional
+    setTimeout(() => {
+      setIsScanning(false);
+      setScanProgress(0);
+    }, 1000);
   };
 
   const organizeByAI = async () => {
     toast({
-      title: "AI Organization Started",
-      description: "Analyzing content and organizing files intelligently..."
+      title: "Feature Not Available", 
+      description: "AI organization requires backend integration to function properly"
     });
-    
-    setTimeout(() => {
-      toast({
-        title: "Organization Complete",
-        description: "Files organized by content type, date, and AI-detected categories"
-      });
-    }, 3000);
   };
 
   const handleThreatAnalysis = () => {
     toast({
-      title: "AI Threat Analysis",
-      description: "Scanning for malware, suspicious files, and privacy risks..."
+      title: "Feature Not Available",
+      description: "Threat analysis requires backend security services to function properly"
     });
-    
-    setTimeout(() => {
+  };
+
+  const removeDuplicates = () => {
+    if (selectedFiles.length === 0) {
       toast({
-        title: "Threat Analysis Complete",
-        description: "1 potential threat detected and quarantined"
+        title: "No Files Selected",
+        description: "Please select duplicates to remove",
+        variant: "destructive"
       });
-    }, 2000);
+      return;
+    }
+    
+    toast({
+      title: "Feature Not Available",
+      description: "File removal requires backend integration and proper file system access"
+    });
   };
 
   const handleAIMessage = (message: string) => {
-    console.log('File Manager AI received:', message);
-    
-    // AI logic for file management
-    if (message.toLowerCase().includes('scan') || message.toLowerCase().includes('find duplicates')) {
-      startAIScan();
-    } else if (message.toLowerCase().includes('organize')) {
-      organizeByAI();
-    } else if (message.toLowerCase().includes('clean') || message.toLowerCase().includes('delete')) {
-      toast({
-        title: "AI Cleanup",
-        description: "Analyzing files for safe cleanup..."
-      });
-    } else if (message.toLowerCase().includes('backup')) {
-      toast({
-        title: "AI Backup",
-        description: "Creating intelligent backup strategy..."
-      });
-    } else if (message.toLowerCase().includes('security') || message.toLowerCase().includes('threat')) {
-      handleThreatAnalysis();
-    }
+    toast({
+      title: "AI Assistant Not Connected",
+      description: "File management AI requires backend integration to provide responses"
+    });
   };
 
   const toggleFileSelection = (fileId: string) => {
@@ -336,6 +313,12 @@ export const FileManager = () => {
                   );
                 })}
               </div>
+
+              <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+                <p className="text-yellow-400 text-sm">
+                  ⚠️ File management operations require backend integration and proper file system access to function
+                </p>
+              </div>
             </TabsContent>
 
             <TabsContent value="threats" className="mt-6 space-y-6">
@@ -349,23 +332,29 @@ export const FileManager = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="text-center p-4 bg-red-500/10 rounded-lg border border-red-500/20">
-                      <div className="text-2xl font-bold text-red-400">1</div>
+                      <div className="text-2xl font-bold text-red-400">--</div>
                       <div className="text-sm text-gray-400">Threats Detected</div>
                     </div>
                     <div className="text-center p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-                      <div className="text-2xl font-bold text-yellow-400">3</div>
+                      <div className="text-2xl font-bold text-yellow-400">--</div>
                       <div className="text-sm text-gray-400">Suspicious Files</div>
                     </div>
                     <div className="text-center p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-                      <div className="text-2xl font-bold text-green-400">2.4GB</div>
+                      <div className="text-2xl font-bold text-green-400">--</div>
                       <div className="text-sm text-gray-400">Protected Data</div>
                     </div>
                   </div>
                   
-                  <Button onClick={handleThreatAnalysis} className="w-full bg-red-500 hover:bg-red-600 text-white">
+                  <Button onClick={handleThreatAnalysis} className="w-full bg-red-500 hover:bg-red-600 text-white" disabled>
                     <Shield className="w-4 h-4 mr-2" />
-                    Run Security Scan
+                    Run Security Scan (Not Available)
                   </Button>
+                  
+                  <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
+                    <p className="text-red-400 text-sm">
+                      ⚠️ Security scanning requires backend integration with antivirus and threat detection services
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -377,17 +366,17 @@ export const FileManager = () => {
                     <CardTitle className="text-white">AI Organization</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white">
+                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" disabled>
                       <Brain className="w-4 h-4 mr-2" />
-                      Smart Content Analysis
+                      Smart Content Analysis (Not Available)
                     </Button>
-                    <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
+                    <Button className="w-full bg-green-500 hover:bg-green-600 text-white" disabled>
                       <FolderOpen className="w-4 h-4 mr-2" />
-                      Auto-categorize by Type
+                      Auto-categorize by Type (Not Available)
                     </Button>
-                    <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white">
+                    <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white" disabled>
                       <Database className="w-4 h-4 mr-2" />
-                      Organize by Usage Pattern
+                      Organize by Usage Pattern (Not Available)
                     </Button>
                   </CardContent>
                 </Card>
@@ -397,20 +386,26 @@ export const FileManager = () => {
                     <CardTitle className="text-white">AI Maintenance</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white">
+                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" disabled>
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Smart Cleanup
+                      Smart Cleanup (Not Available)
                     </Button>
-                    <Button className="w-full bg-teal-500 hover:bg-teal-600 text-white">
+                    <Button className="w-full bg-teal-500 hover:bg-teal-600 text-white" disabled>
                       <Cloud className="w-4 h-4 mr-2" />
-                      Intelligent Backup
+                      Intelligent Backup (Not Available)
                     </Button>
-                    <Button className="w-full bg-indigo-500 hover:bg-indigo-600 text-white">
+                    <Button className="w-full bg-indigo-500 hover:bg-indigo-600 text-white" disabled>
                       <RefreshCw className="w-4 h-4 mr-2" />
-                      Optimize Storage
+                      Optimize Storage (Not Available)
                     </Button>
                   </CardContent>
                 </Card>
+              </div>
+              
+              <div className="p-4 bg-blue-500/20 border border-blue-500/30 rounded-lg">
+                <p className="text-blue-400 text-sm">
+                  ℹ️ AI organization features require backend integration with file system APIs and machine learning services
+                </p>
               </div>
             </TabsContent>
 
@@ -421,19 +416,9 @@ export const FileManager = () => {
                     <CardTitle className="text-white text-lg">Storage Analysis</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Images</span>
-                        <span className="text-white">15.2 GB</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Videos</span>
-                        <span className="text-white">42.8 GB</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Documents</span>
-                        <span className="text-white">3.1 GB</span>
-                      </div>
+                    <div className="text-center py-8">
+                      <BarChart3 className="w-12 h-12 mx-auto mb-4 text-gray-400 opacity-50" />
+                      <p className="text-gray-400 text-sm">Analytics require backend integration</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -443,10 +428,9 @@ export const FileManager = () => {
                     <CardTitle className="text-white text-lg">AI Insights</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-blue-400">87%</div>
-                      <div className="text-sm text-gray-400">Organization Score</div>
-                      <div className="text-sm text-green-400 mt-1">+12% this week</div>
+                    <div className="text-center py-8">
+                      <Brain className="w-12 h-12 mx-auto mb-4 text-gray-400 opacity-50" />
+                      <p className="text-gray-400 text-sm">AI insights require backend services</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -456,15 +440,9 @@ export const FileManager = () => {
                     <CardTitle className="text-white text-lg">Security Status</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center text-green-400">
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        <span>System Protected</span>
-                      </div>
-                      <div className="flex items-center text-yellow-400">
-                        <AlertCircle className="w-4 h-4 mr-2" />
-                        <span>1 threat quarantined</span>
-                      </div>
+                    <div className="text-center py-8">
+                      <Shield className="w-12 h-12 mx-auto mb-4 text-gray-400 opacity-50" />
+                      <p className="text-gray-400 text-sm">Security monitoring requires backend integration</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -479,31 +457,37 @@ export const FileManager = () => {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label className="text-white">Enable AI Monitoring</Label>
-                    <Switch checked={aiMonitoring} onCheckedChange={setAiMonitoring} />
+                    <Switch checked={aiMonitoring} onCheckedChange={setAiMonitoring} disabled />
                   </div>
                   <div className="flex items-center justify-between">
                     <Label className="text-white">Auto-organize Files</Label>
-                    <Switch checked={autoOrganize} onCheckedChange={setAutoOrganize} />
+                    <Switch checked={autoOrganize} onCheckedChange={setAutoOrganize} disabled />
                   </div>
                   <div className="flex items-center justify-between">
                     <Label className="text-white">Smart Backup</Label>
-                    <Switch checked={smartBackup} onCheckedChange={setSmartBackup} />
+                    <Switch checked={smartBackup} onCheckedChange={setSmartBackup} disabled />
                   </div>
                   <div className="flex items-center justify-between">
                     <Label className="text-white">Threat Detection</Label>
-                    <Switch checked={threatDetection} onCheckedChange={setThreatDetection} />
+                    <Switch checked={threatDetection} onCheckedChange={setThreatDetection} disabled />
                   </div>
                   <div className="flex items-center justify-between">
                     <Label className="text-white">Content Analysis</Label>
                     <Switch checked={aiSettings.contentAnalysis} onCheckedChange={(checked) => 
                       setAiSettings(prev => ({ ...prev, contentAnalysis: checked }))
-                    } />
+                    } disabled />
                   </div>
                   <div className="flex items-center justify-between">
                     <Label className="text-white">Privacy Protection</Label>
                     <Switch checked={aiSettings.privacyProtection} onCheckedChange={(checked) => 
                       setAiSettings(prev => ({ ...prev, privacyProtection: checked }))
-                    } />
+                    } disabled />
+                  </div>
+                  
+                  <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+                    <p className="text-yellow-400 text-sm">
+                      ⚠️ AI settings are disabled until backend integration is complete
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -515,7 +499,7 @@ export const FileManager = () => {
                 <CardContent className="space-y-4">
                   <div>
                     <Label className="text-white text-sm">Content Analysis Model</Label>
-                    <Select defaultValue="gpt-4-vision">
+                    <Select defaultValue="gpt-4-vision" disabled>
                       <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
                         <SelectValue />
                       </SelectTrigger>
@@ -528,7 +512,7 @@ export const FileManager = () => {
                   </div>
                   <div>
                     <Label className="text-white text-sm">Security Analysis Model</Label>
-                    <Select defaultValue="security-ai">
+                    <Select defaultValue="security-ai" disabled>
                       <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
                         <SelectValue />
                       </SelectTrigger>
@@ -549,10 +533,11 @@ export const FileManager = () => {
         <div className="w-96 border-l border-white/10">
           <AIChat
             title="File Management AI"
-            placeholder="Ask me to organize files, find duplicates, scan for threats..."
-            initialMessage="Hello! I'm your AI file manager with advanced security and organization capabilities. I can scan for duplicates, detect threats, organize content intelligently, and protect your privacy. What would you like me to help you with?"
+            placeholder="File management AI is not yet connected..."
+            initialMessage="Hello! I'm your AI file manager. Currently, I'm not connected to backend services, so I can't provide real file management capabilities yet."
             onSendMessage={handleAIMessage}
             className="h-full"
+            disabled={true}
           />
         </div>
       </div>

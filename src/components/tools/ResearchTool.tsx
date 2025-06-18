@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Search, Globe, BookOpen, ExternalLink, Brain, Monitor, Filter, TrendingUp, Shield, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,14 +47,11 @@ export const ResearchTool = () => {
     dateRange: "all-time"
   });
 
-  // AI monitoring for research trends
+  // AI monitoring for research trends - disabled since not functional
   useEffect(() => {
     if (searchQuery && aiAnalysis) {
-      const analyzeQuery = setTimeout(() => {
-        console.log('AI analyzing search query for optimization...');
-      }, 1000);
-
-      return () => clearTimeout(analyzeQuery);
+      // Removed fake analysis timeout
+      console.log('Research query analysis would happen here with backend integration');
     }
   }, [searchQuery, aiAnalysis]);
 
@@ -65,74 +61,11 @@ export const ResearchTool = () => {
     setIsSearching(true);
     
     toast({
-      title: "AI Research Started",
-      description: "Performing comprehensive AI-powered research..."
+      title: "Research Not Available",
+      description: "AI-powered research requires backend integration with search APIs and AI services"
     });
-
-    try {
-      // Simulate AI-powered research
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const mockResults: SearchResult[] = [
-        {
-          title: "Comprehensive Analysis: " + searchQuery,
-          url: "https://research.ai/comprehensive-analysis",
-          snippet: `In-depth AI analysis of ${searchQuery} reveals significant insights into current trends, methodologies, and future implications. This comprehensive study examines multiple perspectives and provides evidence-based conclusions.`,
-          source: "AI Research Institute",
-          relevance: 98,
-          credibility: 95,
-          datePublished: "2024-01-15"
-        },
-        {
-          title: "Expert Review: Latest Developments in " + searchQuery,
-          url: "https://experts.com/latest-developments",
-          snippet: `Leading experts in the field provide their latest insights on ${searchQuery}, including breakthrough discoveries, emerging patterns, and critical evaluations of current methodologies.`,
-          source: "Expert Review Journal",
-          relevance: 94,
-          credibility: 92,
-          datePublished: "2024-01-10"
-        },
-        {
-          title: "Data-Driven Insights: " + searchQuery + " Trends",
-          url: "https://datainsights.com/trends-analysis",
-          snippet: `Advanced data analysis reveals key trends and patterns in ${searchQuery}, with statistical significance testing and predictive modeling to forecast future developments.`,
-          source: "Data Science Hub",
-          relevance: 91,
-          credibility: 89,
-          datePublished: "2024-01-08"
-        }
-      ];
-      
-      setSearchResults(mockResults);
-      
-      if (factChecking) {
-        setTimeout(() => {
-          toast({
-            title: "Fact-Checking Complete",
-            description: "All sources verified for accuracy and credibility"
-          });
-        }, 1500);
-      }
-
-      if (deepResearch) {
-        setTimeout(() => {
-          toast({
-            title: "Deep Research Analysis",
-            description: "Cross-referencing with academic databases and expert opinions"
-          });
-        }, 2000);
-      }
-
-    } catch (error) {
-      console.error("Research failed:", error);
-      toast({
-        title: "Research Error",
-        description: "Failed to complete research analysis",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSearching(false);
-    }
+    
+    setIsSearching(false);
   };
 
   const generateResearchSummary = () => {
@@ -146,72 +79,20 @@ export const ResearchTool = () => {
     }
 
     toast({
-      title: "Generating AI Summary",
-      description: "Creating comprehensive research summary..."
+      title: "Summary Generation Not Available",
+      description: "AI summary generation requires backend integration to function properly"
     });
-
-    setTimeout(() => {
-      const summary = `AI Research Summary for "${searchQuery}":
-
-🔍 Key Findings:
-• Current research shows significant developments in this field
-• High credibility sources indicate growing importance
-• Expert consensus points to emerging trends and opportunities
-
-📊 Data Analysis:
-• Average relevance score: ${Math.round(searchResults.reduce((acc, result) => acc + result.relevance, 0) / searchResults.length)}%
-• Source credibility: ${Math.round(searchResults.reduce((acc, result) => acc + result.credibility, 0) / searchResults.length)}%
-• Total sources analyzed: ${searchResults.length}
-
-💡 Recommendations:
-• Focus on recent developments from high-credibility sources
-• Consider cross-referencing with academic publications
-• Monitor ongoing trends for future implications`;
-
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: summary 
-      }]);
-
-      toast({
-        title: "Research Summary Complete",
-        description: "AI has generated a comprehensive analysis"
-      });
-    }, 2000);
   };
 
   const handleSendMessage = (message: string) => {
     setMessages(prev => [...prev, { role: 'user', content: message }]);
     
-    // AI research assistant logic
+    // Removed fake AI responses
     setTimeout(() => {
-      let response = "";
-      
-      if (message.toLowerCase().includes('search') || message.toLowerCase().includes('research')) {
-        if (message.toLowerCase().includes('search')) {
-          const query = message.replace(/search for?/i, '').trim();
-          if (query) {
-            setSearchQuery(query);
-            response = `I'll research "${query}" for you using advanced AI analysis and multiple sources.`;
-            setTimeout(() => performAIResearch(), 1000);
-          } else {
-            response = "What would you like me to research? Please provide a specific topic or query.";
-          }
-        } else {
-          response = "I'll help you with comprehensive research. What topic would you like me to investigate?";
-        }
-      } else if (message.toLowerCase().includes('summarize') || message.toLowerCase().includes('summary')) {
-        response = "I'll create a comprehensive summary of the research findings with key insights and recommendations.";
-        setTimeout(() => generateResearchSummary(), 1000);
-      } else if (message.toLowerCase().includes('fact check') || message.toLowerCase().includes('verify')) {
-        response = "I'll perform fact-checking and source verification to ensure accuracy and credibility of the information.";
-      } else if (message.toLowerCase().includes('trend') || message.toLowerCase().includes('analysis')) {
-        response = "I'll analyze current trends and patterns in the research data to identify emerging insights and opportunities.";
-      } else {
-        response = `I can help you with advanced research including AI-powered search, fact-checking, source verification, trend analysis, and comprehensive summaries. What specific research assistance do you need?`;
-      }
-      
-      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: "Research AI assistant is not yet connected to backend services. Advanced research features require proper integration to function." 
+      }]);
     }, 1000);
   };
 
@@ -232,23 +113,23 @@ export const ResearchTool = () => {
               {aiAnalysis && (
                 <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
                   <Brain className="w-3 h-3 mr-1" />
-                  AI Analysis
+                  AI (Not Connected)
                 </Badge>
               )}
               {factChecking && (
                 <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
                   <Shield className="w-3 h-3 mr-1" />
-                  Fact-Checked
+                  Fact-Check (Not Available)
                 </Badge>
               )}
             </div>
             
             <div className="flex items-center space-x-2">
-              <Button onClick={generateResearchSummary} variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+              <Button onClick={generateResearchSummary} variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10" disabled>
                 <Brain className="w-4 h-4 mr-2" />
                 AI Summary
               </Button>
-              <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+              <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10" disabled>
                 <Database className="w-4 h-4 mr-2" />
                 Save Research
               </Button>
@@ -286,14 +167,14 @@ export const ResearchTool = () => {
                       className="bg-blue-500 hover:bg-blue-600 text-white"
                     >
                       <Search className="w-4 h-4 mr-2" />
-                      {isSearching ? "Researching..." : "AI Research"}
+                      {isSearching ? "Researching..." : "AI Research (Not Available)"}
                     </Button>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <Label className="text-white text-sm">Search Engine</Label>
-                      <Select value={searchEngine} onValueChange={setSearchEngine}>
+                      <Select value={searchEngine} onValueChange={setSearchEngine} disabled>
                         <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
                           <SelectValue />
                         </SelectTrigger>
@@ -308,7 +189,7 @@ export const ResearchTool = () => {
 
                     <div>
                       <Label className="text-white text-sm">Content Filter</Label>
-                      <Select value={contentFilter} onValueChange={setContentFilter}>
+                      <Select value={contentFilter} onValueChange={setContentFilter} disabled>
                         <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
                           <SelectValue />
                         </SelectTrigger>
@@ -323,7 +204,7 @@ export const ResearchTool = () => {
 
                     <div>
                       <Label className="text-white text-sm">Research Depth</Label>
-                      <Select value={aiSettings.researchDepth} onValueChange={(value) => setAiSettings(prev => ({ ...prev, researchDepth: value }))}>
+                      <Select value={aiSettings.researchDepth} onValueChange={(value) => setAiSettings(prev => ({ ...prev, researchDepth: value }))} disabled>
                         <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
                           <SelectValue />
                         </SelectTrigger>
@@ -339,21 +220,27 @@ export const ResearchTool = () => {
 
                   <div className="flex flex-wrap gap-4 p-4 bg-white/5 rounded-lg">
                     <div className="flex items-center space-x-2">
-                      <Switch checked={aiAnalysis} onCheckedChange={setAiAnalysis} />
-                      <span className="text-white text-sm">AI Analysis</span>
+                      <Switch checked={aiAnalysis} onCheckedChange={setAiAnalysis} disabled />
+                      <span className="text-white text-sm">AI Analysis (Not Available)</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Switch checked={factChecking} onCheckedChange={setFactChecking} />
-                      <span className="text-white text-sm">Fact Checking</span>
+                      <Switch checked={factChecking} onCheckedChange={setFactChecking} disabled />
+                      <span className="text-white text-sm">Fact Checking (Not Available)</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Switch checked={sourceVerification} onCheckedChange={setSourceVerification} />
-                      <span className="text-white text-sm">Source Verification</span>
+                      <Switch checked={sourceVerification} onCheckedChange={setSourceVerification} disabled />
+                      <span className="text-white text-sm">Source Verification (Not Available)</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Switch checked={deepResearch} onCheckedChange={setDeepResearch} />
-                      <span className="text-white text-sm">Deep Research</span>
+                      <Switch checked={deepResearch} onCheckedChange={setDeepResearch} disabled />
+                      <span className="text-white text-sm">Deep Research (Not Available)</span>
                     </div>
+                  </div>
+                  
+                  <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
+                    <p className="text-red-400 text-sm">
+                      ⚠️ AI research features require backend integration with search APIs, AI models, and fact-checking services
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -372,38 +259,10 @@ export const ResearchTool = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {searchResults.length > 0 ? (
-                    searchResults.map((result, index) => (
-                      <div key={index} className="border border-white/10 rounded-lg p-4 bg-white/5">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="text-blue-400 font-medium">{result.title}</h3>
-                          <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" />
-                        </div>
-                        <p className="text-gray-300 text-sm mb-3">{result.snippet}</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <Badge variant="outline" className="text-xs">{result.source}</Badge>
-                            {result.datePublished && (
-                              <span className="text-xs text-gray-500">{result.datePublished}</span>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="text-xs text-green-400">
-                              Relevance: {result.relevance}%
-                            </div>
-                            <div className="text-xs text-blue-400">
-                              Credibility: {result.credibility}%
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center text-gray-400 py-12">
-                      <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No research results yet. Start by entering a search query.</p>
-                    </div>
-                  )}
+                  <div className="text-center text-gray-400 py-12">
+                    <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No research results available. Research functionality requires backend integration.</p>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -415,28 +274,10 @@ export const ResearchTool = () => {
                     <CardTitle className="text-white">Research Analytics</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {searchResults.length > 0 ? (
-                      <div className="space-y-4">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Average Relevance</span>
-                          <span className="text-green-400 font-medium">
-                            {Math.round(searchResults.reduce((acc, result) => acc + result.relevance, 0) / searchResults.length)}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Average Credibility</span>
-                          <span className="text-blue-400 font-medium">
-                            {Math.round(searchResults.reduce((acc, result) => acc + result.credibility, 0) / searchResults.length)}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Total Sources</span>
-                          <span className="text-white font-medium">{searchResults.length}</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-gray-400">No data to analyze yet.</p>
-                    )}
+                    <div className="text-center py-8">
+                      <TrendingUp className="w-12 h-12 mx-auto mb-4 text-gray-400 opacity-50" />
+                      <p className="text-gray-400 text-sm">Analytics require backend integration</p>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -445,19 +286,9 @@ export const ResearchTool = () => {
                     <CardTitle className="text-white">AI Insights</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center text-blue-400">
-                        <TrendingUp className="w-4 h-4 mr-2" />
-                        <span>High-quality sources identified</span>
-                      </div>
-                      <div className="flex items-center text-green-400">
-                        <Shield className="w-4 h-4 mr-2" />
-                        <span>Fact-checking verified</span>
-                      </div>
-                      <div className="flex items-center text-purple-400">
-                        <Brain className="w-4 h-4 mr-2" />
-                        <span>AI analysis complete</span>
-                      </div>
+                    <div className="text-center py-8">
+                      <Brain className="w-12 h-12 mx-auto mb-4 text-gray-400 opacity-50" />
+                      <p className="text-gray-400 text-sm">AI insights require backend services</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -472,7 +303,7 @@ export const ResearchTool = () => {
                 <CardContent className="space-y-4">
                   <div>
                     <Label className="text-white text-sm">AI Model</Label>
-                    <Select value={aiSettings.model} onValueChange={(value) => setAiSettings(prev => ({ ...prev, model: value }))}>
+                    <Select value={aiSettings.model} onValueChange={(value) => setAiSettings(prev => ({ ...prev, model: value }))} disabled>
                       <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
                         <SelectValue />
                       </SelectTrigger>
@@ -486,7 +317,7 @@ export const ResearchTool = () => {
 
                   <div>
                     <Label className="text-white text-sm">Maximum Results</Label>
-                    <Select value={aiSettings.maxResults.toString()} onValueChange={(value) => setAiSettings(prev => ({ ...prev, maxResults: parseInt(value) }))}>
+                    <Select value={aiSettings.maxResults.toString()} onValueChange={(value) => setAiSettings(prev => ({ ...prev, maxResults: parseInt(value) }))} disabled>
                       <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
                         <SelectValue />
                       </SelectTrigger>
@@ -501,7 +332,7 @@ export const ResearchTool = () => {
 
                   <div>
                     <Label className="text-white text-sm">Date Range</Label>
-                    <Select value={aiSettings.dateRange} onValueChange={(value) => setAiSettings(prev => ({ ...prev, dateRange: value }))}>
+                    <Select value={aiSettings.dateRange} onValueChange={(value) => setAiSettings(prev => ({ ...prev, dateRange: value }))} disabled>
                       <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
                         <SelectValue />
                       </SelectTrigger>
@@ -514,6 +345,12 @@ export const ResearchTool = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  
+                  <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+                    <p className="text-yellow-400 text-sm">
+                      ⚠️ Research settings are disabled until backend integration is complete
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -525,7 +362,7 @@ export const ResearchTool = () => {
       <div className="w-96">
         <ChatInterface
           title="Research Assistant AI"
-          placeholder="Ask me to research anything, analyze trends, fact-check..."
+          placeholder="Research assistant AI is not yet connected..."
           messages={messages}
           onSendMessage={handleSendMessage}
           className="h-full"
