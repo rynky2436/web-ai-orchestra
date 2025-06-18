@@ -10,17 +10,27 @@ import {
   Plus,
   Search,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Send,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const FileManager = () => {
   const [currentPath, setCurrentPath] = useState('/home/user/projects');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [editingFile, setEditingFile] = useState<string | null>(null);
+  const [fileContent, setFileContent] = useState('');
+  const [chatMessages, setChatMessages] = useState<Array<{role: string, content: string}>>([
+    { role: 'assistant', content: 'Hello! I\'m your file management assistant. I can help you organize, edit, and manage your files.' }
+  ]);
 
   const files = [
     { name: 'nexusai-backend', type: 'folder', size: '—', modified: '2 hours ago' },
@@ -38,6 +48,37 @@ export const FileManager = () => {
         ? prev.filter(f => f !== fileName)
         : [...prev, fileName]
     );
+  };
+
+  const handleEditFile = (fileName: string) => {
+    setEditingFile(fileName);
+    // Simulate loading file content
+    setFileContent(`// Content of ${fileName}
+// This is a simulated file editor
+// You can modify the content here
+
+console.log('Editing ${fileName}');
+`);
+  };
+
+  const handleSaveFile = () => {
+    setChatMessages(prev => [
+      ...prev,
+      { role: 'assistant', content: `File "${editingFile}" has been saved successfully!` }
+    ]);
+    setEditingFile(null);
+    setFileContent('');
+  };
+
+  const handleChatSubmit = () => {
+    if (!chatInput.trim()) return;
+    
+    setChatMessages(prev => [
+      ...prev,
+      { role: 'user', content: chatInput },
+      { role: 'assistant', content: `I'll help you with "${chatInput}". What specific file operation would you like me to perform?` }
+    ]);
+    setChatInput('');
   };
 
   return (
@@ -86,89 +127,191 @@ export const FileManager = () => {
         </div>
       </div>
 
-      {/* File List */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-4">
-          {/* Action Bar */}
-          {selectedFiles.length > 0 && (
-            <div className="mb-4 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-blue-400 text-sm">
-                  {selectedFiles.length} file(s) selected
-                </span>
-                <div className="flex items-center space-x-2">
-                  <Button size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
-                    <Download className="w-4 h-4 mr-1" />
-                    Download
-                  </Button>
-                  <Button size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
-                    <Edit className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="outline" className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30">
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Delete
+      {/* Main Content */}
+      <div className="flex-1 flex">
+        {/* File List */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            {/* Action Bar */}
+            {selectedFiles.length > 0 && (
+              <div className="mb-4 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-blue-400 text-sm">
+                    {selectedFiles.length} file(s) selected
+                  </span>
+                  <div className="flex items-center space-x-2">
+                    <Button size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+                      <Download className="w-4 h-4 mr-1" />
+                      Download
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                      onClick={() => selectedFiles[0] && handleEditFile(selectedFiles[0])}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button size="sm" variant="outline" className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30">
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Files Grid */}
+            <div className="grid grid-cols-1 gap-2">
+              {files.map((file) => (
+                <Card 
+                  key={file.name}
+                  className={`cursor-pointer transition-all duration-200 ${
+                    selectedFiles.includes(file.name)
+                      ? 'bg-blue-500/20 border-blue-500/30'
+                      : 'bg-white/5 border-white/10 hover:bg-white/10'
+                  }`}
+                  onClick={() => toggleFileSelection(file.name)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        {file.type === 'folder' ? (
+                          <FolderOpen className="w-5 h-5 text-blue-400" />
+                        ) : (
+                          <File className="w-5 h-5 text-gray-400" />
+                        )}
+                        <div>
+                          <div className="text-white font-medium">{file.name}</div>
+                          <div className="text-xs text-gray-400">
+                            {file.size} • Modified {file.modified}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        {file.type === 'folder' && (
+                          <Badge variant="outline" className="border-blue-500/30 text-blue-400">
+                            Folder
+                          </Badge>
+                        )}
+                        {file.name.endsWith('.py') && (
+                          <Badge variant="outline" className="border-green-500/30 text-green-400">
+                            Python
+                          </Badge>
+                        )}
+                        {file.name.endsWith('.json') && (
+                          <Badge variant="outline" className="border-yellow-500/30 text-yellow-400">
+                            JSON
+                          </Badge>
+                        )}
+                        {file.name.endsWith('.md') && (
+                          <Badge variant="outline" className="border-purple-500/30 text-purple-400">
+                            Markdown
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Side Panel */}
+        <div className="w-96 border-l border-white/10 flex flex-col">
+          <Tabs defaultValue="chat" className="h-full flex flex-col">
+            <TabsList className="bg-white/5 border-b border-white/10 rounded-none">
+              <TabsTrigger value="chat" className="text-white">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Assistant
+              </TabsTrigger>
+              {editingFile && (
+                <TabsTrigger value="editor" className="text-white">
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editor
+                </TabsTrigger>
+              )}
+            </TabsList>
+
+            <TabsContent value="chat" className="flex-1 m-0 flex flex-col">
+              <div className="p-4 border-b border-white/10 bg-black/20">
+                <h3 className="text-white font-medium">File Assistant</h3>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {chatMessages.map((message, index) => (
+                  <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] p-3 rounded-lg ${
+                      message.role === 'user' 
+                        ? 'bg-blue-500/20 text-blue-100' 
+                        : 'bg-white/5 text-gray-300'
+                    }`}>
+                      {message.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="p-4 border-t border-white/10">
+                <div className="flex space-x-2">
+                  <Input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ask about file operations..."
+                    className="flex-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
+                    onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
+                  />
+                  <Button
+                    onClick={handleChatSubmit}
+                    disabled={!chatInput.trim()}
+                    size="sm"
+                    className="bg-teal-500 hover:bg-teal-600 text-white"
+                  >
+                    <Send className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
-            </div>
-          )}
+            </TabsContent>
 
-          {/* Files Grid */}
-          <div className="grid grid-cols-1 gap-2">
-            {files.map((file) => (
-              <Card 
-                key={file.name}
-                className={`cursor-pointer transition-all duration-200 ${
-                  selectedFiles.includes(file.name)
-                    ? 'bg-blue-500/20 border-blue-500/30'
-                    : 'bg-white/5 border-white/10 hover:bg-white/10'
-                }`}
-                onClick={() => toggleFileSelection(file.name)}
-              >
-                <CardContent className="p-4">
+            {editingFile && (
+              <TabsContent value="editor" className="flex-1 m-0 flex flex-col">
+                <div className="p-4 border-b border-white/10 bg-black/20">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      {file.type === 'folder' ? (
-                        <FolderOpen className="w-5 h-5 text-blue-400" />
-                      ) : (
-                        <File className="w-5 h-5 text-gray-400" />
-                      )}
-                      <div>
-                        <div className="text-white font-medium">{file.name}</div>
-                        <div className="text-xs text-gray-400">
-                          {file.size} • Modified {file.modified}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      {file.type === 'folder' && (
-                        <Badge variant="outline" className="border-blue-500/30 text-blue-400">
-                          Folder
-                        </Badge>
-                      )}
-                      {file.name.endsWith('.py') && (
-                        <Badge variant="outline" className="border-green-500/30 text-green-400">
-                          Python
-                        </Badge>
-                      )}
-                      {file.name.endsWith('.json') && (
-                        <Badge variant="outline" className="border-yellow-500/30 text-yellow-400">
-                          JSON
-                        </Badge>
-                      )}
-                      {file.name.endsWith('.md') && (
-                        <Badge variant="outline" className="border-purple-500/30 text-purple-400">
-                          Markdown
-                        </Badge>
-                      )}
+                    <h3 className="text-white font-medium">Editing: {editingFile}</h3>
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={handleSaveFile}
+                        size="sm"
+                        className="bg-green-500 hover:bg-green-600 text-white"
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        onClick={() => setEditingFile(null)}
+                        size="sm"
+                        variant="outline"
+                        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                      >
+                        Close
+                      </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </div>
+                
+                <div className="flex-1">
+                  <Textarea
+                    value={fileContent}
+                    onChange={(e) => setFileContent(e.target.value)}
+                    className="w-full h-full bg-slate-900 text-gray-300 font-mono text-sm resize-none border-none rounded-none"
+                    placeholder="File content will appear here..."
+                  />
+                </div>
+              </TabsContent>
+            )}
+          </Tabs>
         </div>
       </div>
     </div>

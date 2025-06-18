@@ -1,7 +1,8 @@
 
 import { useState } from "react";
-import { Play, Download, Save, Code, Eye, FileCode, Zap, Globe, Palette, Settings } from "lucide-react";
+import { Play, Download, Save, Code, Eye, FileCode, Zap, Globe, Palette, Settings, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -153,11 +154,15 @@ function changeTheme() {
 
   const [projectType, setProjectType] = useState('website');
   const [previewKey, setPreviewKey] = useState(0);
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<Array<{role: string, content: string}>>([
+    { role: 'assistant', content: 'Hello! I\'m your coding assistant. I can help you write HTML, CSS, and JavaScript. What would you like to create?' }
+  ]);
 
   const getPreviewContent = () => {
     if (projectType === 'website') {
       return htmlCode;
-    } else if (projectType === 'css-only') {
+    } else if (projectType === 'theme') {
       return `<!DOCTYPE html>
 <html>
 <head>
@@ -205,6 +210,17 @@ function changeTheme() {
     a.download = `nexusai-${projectType}-${Date.now()}.html`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleChatSubmit = () => {
+    if (!chatInput.trim()) return;
+    
+    setChatMessages(prev => [
+      ...prev,
+      { role: 'user', content: chatInput },
+      { role: 'assistant', content: `I'll help you with "${chatInput}". Let me generate or modify the code for you.` }
+    ]);
+    setChatInput('');
   };
 
   return (
@@ -285,6 +301,10 @@ function changeTheme() {
                 <Zap className="w-4 h-4 mr-2" />
                 JavaScript
               </TabsTrigger>
+              <TabsTrigger value="chat" className="text-white">
+                <Send className="w-4 h-4 mr-2" />
+                AI Assistant
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="html" className="flex-1 m-0">
@@ -312,6 +332,42 @@ function changeTheme() {
                 className="w-full h-full bg-slate-900 text-gray-300 p-4 font-mono text-sm resize-none border-none outline-none"
                 placeholder="Write your JavaScript here..."
               />
+            </TabsContent>
+
+            <TabsContent value="chat" className="flex-1 m-0 flex flex-col">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {chatMessages.map((message, index) => (
+                  <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] p-3 rounded-lg ${
+                      message.role === 'user' 
+                        ? 'bg-blue-500/20 text-blue-100' 
+                        : 'bg-white/5 text-gray-300'
+                    }`}>
+                      {message.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="p-4 border-t border-white/10">
+                <div className="flex space-x-2">
+                  <Input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ask me to help with your code..."
+                    className="flex-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
+                    onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
+                  />
+                  <Button
+                    onClick={handleChatSubmit}
+                    disabled={!chatInput.trim()}
+                    size="sm"
+                    className="bg-purple-500 hover:bg-purple-600 text-white"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
