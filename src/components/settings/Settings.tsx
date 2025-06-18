@@ -9,12 +9,13 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { OperatorPermissions } from "./OperatorPermissions";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 export const Settings = () => {
+  const { elevenLabsApiKey, setElevenLabsApiKey } = useSettingsStore();
   const [config, setConfig] = useState({
     openai_api_key: '',
     claude_api_key: '',
-    elevenlabs_api_key: '',
     backend_url: 'http://localhost:8000',
     default_model: 'gpt-4o',
     voice_enabled: false,
@@ -26,6 +27,7 @@ export const Settings = () => {
   const handleSave = () => {
     // Save configuration to backend
     console.log('Saving configuration:', config);
+    console.log('ElevenLabs API Key:', elevenLabsApiKey);
     // In a real app, this would make an API call to save settings
   };
 
@@ -86,9 +88,9 @@ export const Settings = () => {
               <Input
                 id="elevenlabs-key"
                 type="password"
-                value={config.elevenlabs_api_key}
-                onChange={(e) => handleInputChange('elevenlabs_api_key', e.target.value)}
-                placeholder="..."
+                value={elevenLabsApiKey}
+                onChange={(e) => setElevenLabsApiKey(e.target.value)}
+                placeholder="Enter your ElevenLabs API key..."
                 className="mt-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
               />
             </div>

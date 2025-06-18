@@ -6,9 +6,11 @@ import { AIProvider, AppSettings } from '@/types/modules';
 interface SettingsStore {
   settings: AppSettings;
   aiProviders: AIProvider[];
+  elevenLabsApiKey: string;
   updateSettings: (settings: Partial<AppSettings>) => void;
   updateAIProvider: (providerId: string, updates: Partial<AIProvider>) => void;
   addAIProvider: (provider: AIProvider) => void;
+  setElevenLabsApiKey: (key: string) => void;
 }
 
 const defaultSettings: AppSettings = {
@@ -63,6 +65,7 @@ export const useSettingsStore = create<SettingsStore>()(
     (set, get) => ({
       settings: defaultSettings,
       aiProviders: defaultProviders,
+      elevenLabsApiKey: '',
       updateSettings: (newSettings) =>
         set((state) => ({
           settings: { ...state.settings, ...newSettings }
@@ -76,7 +79,9 @@ export const useSettingsStore = create<SettingsStore>()(
       addAIProvider: (provider) =>
         set((state) => ({
           aiProviders: [...state.aiProviders, provider]
-        }))
+        })),
+      setElevenLabsApiKey: (key) =>
+        set({ elevenLabsApiKey: key })
     }),
     {
       name: 'nexusai-settings'
