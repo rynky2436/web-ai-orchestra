@@ -1,0 +1,12 @@
+
+.git\
+node_modules\
+.vscode\
+build\
+dist\
+*.log
+.env
+.env.local
+*.tmp
+*.temp
+.cache\
