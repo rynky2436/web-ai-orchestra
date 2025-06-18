@@ -20,7 +20,18 @@ import {
   Puzzle,
   Mic,
   Volume2,
-  Settings
+  Settings,
+  ImageIcon,
+  Video,
+  Music,
+  Archive,
+  Workflow,
+  MessageSquare,
+  TrendingUp,
+  Lock,
+  Wifi,
+  HardDrive,
+  Smartphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,12 +48,12 @@ interface AgentLauncherProps {
 
 const coreModules = [
   {
-    id: 'professional-ai',
-    name: 'Professional AI',
-    description: 'Multi-provider AI platform with advanced capabilities',
-    icon: Brain,
-    color: 'from-purple-500 to-pink-500',
-    permissions: ['Multi-AI Access', 'Advanced Processing', 'Memory System'],
+    id: 'deep-research',
+    name: 'Deep Research',
+    description: 'Multi-provider AI research with synthesis and analysis',
+    icon: Search,
+    color: 'from-orange-500 to-red-500',
+    permissions: ['Multi-AI Access', 'Web Research', 'Data Analysis'],
     status: 'ready'
   },
   {
@@ -64,13 +75,98 @@ const coreModules = [
     status: 'ready'
   },
   {
-    id: 'browser-automation',
-    name: 'Browser Automation',
-    description: 'Automate Chrome with Puppeteer-like functionality',
-    icon: Chrome,
-    color: 'from-blue-500 to-green-500',
-    permissions: ['Web Access', 'Browser Control'],
+    id: 'ai-file-manager',
+    name: 'AI File Manager',
+    description: 'Intelligent file organization, duplicate detection, and media management',
+    icon: FolderOpen,
+    color: 'from-teal-500 to-green-500',
+    permissions: ['File System Access', 'Image Analysis', 'Content Detection'],
     status: 'ready'
+  },
+  {
+    id: 'workflow-automation',
+    name: 'Workflow Automation',
+    description: 'Create and execute complex automation workflows',
+    icon: Workflow,
+    color: 'from-purple-500 to-indigo-500',
+    permissions: ['Multi-App Control', 'Task Scheduling', 'Event Triggers'],
+    status: 'ready'
+  },
+  {
+    id: 'ai-social-manager',
+    name: 'AI Social Manager',
+    description: 'Manage social media, content creation, and engagement',
+    icon: MessageSquare,
+    color: 'from-pink-500 to-rose-500',
+    permissions: ['Social API Access', 'Content Generation', 'Analytics'],
+    status: 'ready'
+  }
+];
+
+const aiAgents = [
+  {
+    id: 'media-organizer',
+    name: 'Media Organizer',
+    description: 'AI-powered photo/video organization and duplicate removal',
+    icon: ImageIcon,
+    color: 'from-violet-500 to-purple-500',
+    category: 'media'
+  },
+  {
+    id: 'content-curator',
+    name: 'Content Curator',
+    description: 'Analyze and categorize documents, images, and media files',
+    icon: Archive,
+    color: 'from-emerald-500 to-teal-500',
+    category: 'ai'
+  },
+  {
+    id: 'system-optimizer',
+    name: 'System Optimizer',
+    description: 'AI-driven system performance monitoring and optimization',
+    icon: TrendingUp,
+    color: 'from-blue-500 to-indigo-500',
+    category: 'system'
+  },
+  {
+    id: 'security-guardian',
+    name: 'Security Guardian',
+    description: 'AI security monitoring, threat detection, and protection',
+    icon: Shield,
+    color: 'from-red-500 to-pink-500',
+    category: 'security'
+  },
+  {
+    id: 'network-monitor',
+    name: 'Network Monitor',
+    description: 'Intelligent network traffic analysis and optimization',
+    icon: Wifi,
+    color: 'from-cyan-500 to-blue-500',
+    category: 'system'
+  },
+  {
+    id: 'data-miner',
+    name: 'Data Miner',
+    description: 'Extract insights from large datasets and databases',
+    icon: Database,
+    color: 'from-gray-500 to-slate-500',
+    category: 'ai'
+  },
+  {
+    id: 'mobile-assistant',
+    name: 'Mobile Assistant',
+    description: 'Control and automate mobile device interactions',
+    icon: Smartphone,
+    color: 'from-green-500 to-emerald-500',
+    category: 'automation'
+  },
+  {
+    id: 'disk-cleaner',
+    name: 'AI Disk Cleaner',
+    description: 'Intelligent storage management and cleanup automation',
+    icon: HardDrive,
+    color: 'from-orange-500 to-amber-500',
+    category: 'system'
   }
 ];
 
@@ -136,17 +232,26 @@ export const AgentLauncher = ({ onSelectAgent, onViewChange }: AgentLauncherProp
   const { setCurrentProvider, setCurrentModule, initializePlatform } = useProfessionalStore();
 
   const handleLaunchModule = (moduleId: string) => {
-    if (moduleId === 'professional-ai') {
-      // Initialize the professional AI platform
+    if (moduleId === 'deep-research') {
       initializePlatform();
       toast({
-        title: "Professional AI Activated",
-        description: "Multi-provider AI platform is now ready for use"
+        title: "Deep Research Activated",
+        description: "Multi-provider AI research platform is now ready"
       });
     }
     
     onSelectAgent(moduleId);
     onViewChange('chat');
+  };
+
+  const handleLaunchAgent = (agentId: string) => {
+    onSelectAgent(agentId);
+    onViewChange('chat');
+    
+    toast({
+      title: `${agentId.replace('-', ' ')} Agent Launched`,
+      description: "AI agent is now active and ready for tasks"
+    });
   };
 
   const handleLaunchTool = (toolId: string) => {
@@ -178,16 +283,15 @@ export const AgentLauncher = ({ onSelectAgent, onViewChange }: AgentLauncherProp
   };
 
   const handleQuickStart = () => {
-    // Quick start with professional AI
     setCurrentProvider('openai');
     setCurrentModule('research');
     initializePlatform();
-    onSelectAgent('professional-ai');
+    onSelectAgent('deep-research');
     onViewChange('chat');
     
     toast({
       title: "Quick Start Activated",
-      description: "NexusAI is ready with OpenAI Research module"
+      description: "NexusAI is ready with Deep Research module"
     });
   };
 
@@ -196,7 +300,7 @@ export const AgentLauncher = ({ onSelectAgent, onViewChange }: AgentLauncherProp
       <div className="p-6">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-white mb-2">NexusAI Control Center</h2>
-          <p className="text-gray-400 mb-4">Launch AI modules and tools for complete automation, development, and system control</p>
+          <p className="text-gray-400 mb-4">Launch AI modules and agents for complete automation, research, and system control</p>
           
           <Button 
             onClick={handleQuickStart}
@@ -208,14 +312,15 @@ export const AgentLauncher = ({ onSelectAgent, onViewChange }: AgentLauncherProp
         </div>
 
         <Tabs defaultValue="modules" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-white/5 border-white/10">
+          <TabsList className="grid w-full grid-cols-4 bg-white/5 border-white/10">
             <TabsTrigger value="modules" className="text-white data-[state=active]:bg-blue-500/20">Core Modules</TabsTrigger>
+            <TabsTrigger value="agents" className="text-white data-[state=active]:bg-blue-500/20">AI Agents</TabsTrigger>
             <TabsTrigger value="tools" className="text-white data-[state=active]:bg-blue-500/20">Tools</TabsTrigger>
             <TabsTrigger value="permissions" className="text-white data-[state=active]:bg-blue-500/20">Permissions</TabsTrigger>
           </TabsList>
 
           <TabsContent value="modules" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {coreModules.map((module) => (
                 <Card key={module.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer group">
                   <CardHeader className="pb-3">
@@ -244,6 +349,36 @@ export const AgentLauncher = ({ onSelectAgent, onViewChange }: AgentLauncherProp
                     >
                       <Play className="w-4 h-4 mr-2" />
                       Launch Module
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="agents" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {aiAgents.map((agent) => (
+                <Card key={agent.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer group">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className={`w-12 h-12 bg-gradient-to-r ${agent.color} rounded-lg flex items-center justify-center`}>
+                        <agent.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <Badge variant="outline" className="border-white/20 text-gray-300 capitalize">
+                        {agent.category}
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-white text-lg">{agent.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-400 text-sm mb-4">{agent.description}</p>
+                    <Button 
+                      onClick={() => handleLaunchAgent(agent.id)}
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                    >
+                      <Bot className="w-4 h-4 mr-2" />
+                      Launch Agent
                     </Button>
                   </CardContent>
                 </Card>
