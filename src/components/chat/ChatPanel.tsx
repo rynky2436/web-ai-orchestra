@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, MicOff, Volume2, VolumeX, Bot } from "lucide-react";
+import { Send, Mic, MicOff, Volume2, VolumeX, Bot, Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,6 +34,9 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
   const [inputValue, setInputValue] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -48,6 +51,41 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
 
   useEffect(() => {
     initializePlatform();
+    
+    // Initialize speech recognition
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      recognitionInstance.continuous = false;
+      recognitionInstance.interimResults = false;
+      recognitionInstance.lang = 'en-US';
+      
+      recognitionInstance.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInputValue(transcript);
+        setIsListening(false);
+      };
+      
+      recognitionInstance.onerror = () => {
+        setIsListening(false);
+        toast({
+          title: "Voice Recognition Error",
+          description: "Could not capture audio. Please try again.",
+          variant: "destructive"
+        });
+      };
+      
+      recognitionInstance.onend = () => {
+        setIsListening(false);
+      };
+      
+      setRecognition(recognitionInstance);
+    }
+    
+    // Initialize speech synthesis
+    if ('speechSynthesis' in window) {
+      setSpeechSynthesis(window.speechSynthesis);
+    }
   }, [initializePlatform]);
 
   const scrollToBottom = () => {
@@ -57,6 +95,22 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const speakText = (text: string) => {
+    if (speechSynthesis && isPlaying) {
+      speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 0.8;
+      
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      speechSynthesis.speak(utterance);
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -73,7 +127,6 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
     setInputValue('');
 
     try {
-      // Use the professional AI system to process the request
       const result = await processRequest(currentInput);
       
       let responseContent = '';
@@ -105,6 +158,11 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Auto-speak response if enabled
+      if (isPlaying) {
+        speakText(responseContent);
+      }
 
       toast({
         title: "Request Processed",
@@ -139,19 +197,43 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
   };
 
   const toggleListening = () => {
-    setIsListening(!isListening);
+    if (!recognition) {
+      toast({
+        title: "Voice Not Supported",
+        description: "Your browser doesn't support voice recognition",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isListening) {
+      recognition.stop();
+      setIsListening(false);
+    } else {
+      recognition.start();
+      setIsListening(true);
+      toast({
+        title: "Listening...",
+        description: "Speak now, I'm listening"
+      });
+    }
+  };
+
+  const toggleAutoSpeak = () => {
+    if (isPlaying) {
+      speechSynthesis?.cancel();
+      setIsSpeaking(false);
+    }
+    setIsPlaying(!isPlaying);
     toast({
-      title: isListening ? "Voice Input Stopped" : "Voice Input Started",
-      description: isListening ? "Voice recognition disabled" : "Voice recognition enabled"
+      title: isPlaying ? "Auto-speak Disabled" : "Auto-speak Enabled",
+      description: isPlaying ? "Responses will no longer be spoken" : "Responses will be automatically spoken"
     });
   };
 
-  const togglePlaying = () => {
-    setIsPlaying(!isPlaying);
-    toast({
-      title: isPlaying ? "Audio Stopped" : "Audio Started",
-      description: isPlaying ? "Text-to-speech disabled" : "Text-to-speech enabled"
-    });
+  const stopSpeaking = () => {
+    speechSynthesis?.cancel();
+    setIsSpeaking(false);
   };
 
   return (
@@ -170,6 +252,12 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
             {isProcessing && (
               <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 animate-pulse">
                 Processing...
+              </Badge>
+            )}
+            {isSpeaking && (
+              <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 animate-pulse">
+                <Volume2 className="w-3 h-3 mr-1" />
+                Speaking
               </Badge>
             )}
           </div>
@@ -204,11 +292,26 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={togglePlaying}
-              className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+              onClick={toggleAutoSpeak}
+              className={`${
+                isPlaying 
+                  ? 'bg-purple-500/20 border-purple-500/30 text-purple-400' 
+                  : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
+              }`}
             >
-              {isPlaying ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              {isPlaying ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </Button>
+
+            {isSpeaking && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={stopSpeaking}
+                className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30"
+              >
+                <Square className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -265,7 +368,7 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
             onClick={toggleListening}
             className={`${
               isListening 
-                ? 'bg-red-500/20 border-red-500/30 text-red-400' 
+                ? 'bg-red-500/20 border-red-500/30 text-red-400 animate-pulse' 
                 : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
             }`}
           >

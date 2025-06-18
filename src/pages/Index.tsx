@@ -1,7 +1,9 @@
+
 import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { AgentLauncher } from "@/components/agents/AgentLauncher";
+import { CodeCreatorAgent } from "@/components/agents/CodeCreatorAgent";
 import { Settings } from "@/components/settings/Settings";
 import { ResearchTool } from "@/components/tools/ResearchTool";
 import { CodeSandbox } from "@/components/tools/CodeSandbox";

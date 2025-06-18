@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Bot, 
@@ -196,12 +195,12 @@ const tools = [
     category: 'system'
   },
   {
-    id: 'plugins',
-    name: 'Plugin System',
-    description: 'Manage and install custom plugins (.ts/.py files)',
-    icon: Puzzle,
+    id: 'code-creator',
+    name: 'Code Creator Agent',
+    description: 'AI assistant for creating plugins, websites, themes, and applications',
+    icon: Code,
     color: 'from-violet-500 to-purple-500',
-    category: 'system'
+    category: 'development'
   },
   {
     id: 'ai-switch',
@@ -209,14 +208,6 @@ const tools = [
     description: 'Switch between OpenAI, Claude, Ollama, and Gemini',
     icon: Zap,
     color: 'from-yellow-500 to-orange-500',
-    category: 'ai'
-  },
-  {
-    id: 'voice',
-    name: 'Voice Control',
-    description: 'ElevenLabs TTS and speech-to-text integration',
-    icon: Mic,
-    color: 'from-purple-500 to-pink-500',
     category: 'ai'
   }
 ];
