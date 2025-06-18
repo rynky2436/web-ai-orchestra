@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Search, Globe, BookOpen, ExternalLink, Brain, Monitor, Filter, TrendingUp, Shield, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,10 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChatInterface } from "@/components/shared/ChatInterface";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { aiRoutingService } from "@/services/aiRoutingService";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -22,8 +26,6 @@ interface SearchResult {
   url: string;
   snippet: string;
   source: string;
-  relevance: number;
-  credibility: number;
   datePublished?: string;
 }
 
@@ -32,104 +34,122 @@ export const ResearchTool = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [aiAnalysis, setAiAnalysis] = useState(true);
-  const [factChecking, setFactChecking] = useState(true);
-  const [sourceVerification, setSourceVerification] = useState(true);
-  const [deepResearch, setDeepResearch] = useState(false);
   const [searchEngine, setSearchEngine] = useState("all");
   const [contentFilter, setContentFilter] = useState("academic");
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  const [aiSettings, setAiSettings] = useState({
-    model: "gpt-4",
-    maxResults: 20,
-    researchDepth: "comprehensive",
-    languageFilter: "english",
-    dateRange: "all-time"
-  });
-
-  // AI monitoring for research trends - disabled since not functional
   useEffect(() => {
-    if (searchQuery && aiAnalysis) {
-      // Removed fake analysis timeout
-      console.log('Research query analysis would happen here with backend integration');
-    }
-  }, [searchQuery, aiAnalysis]);
+    checkBackendConnection();
+  }, []);
 
-  const performAIResearch = async () => {
-    if (!searchQuery.trim()) return;
-    
-    setIsSearching(true);
-    
-    toast({
-      title: "Research Not Available",
-      description: "AI-powered research requires backend integration with search APIs and AI services"
-    });
-    
-    setIsSearching(false);
+  const checkBackendConnection = async () => {
+    try {
+      const providers = await aiRoutingService.getProviderStatus();
+      const hasConnectedProvider = providers.some(p => p.connected);
+      setIsConnected(hasConnectedProvider);
+      
+      if (!hasConnectedProvider) {
+        setConnectionError("No AI providers connected. Research features are unavailable.");
+      } else {
+        setConnectionError(null);
+      }
+    } catch (error) {
+      setIsConnected(false);
+      setConnectionError("Backend services are not available.");
+    }
   };
 
-  const generateResearchSummary = () => {
-    if (searchResults.length === 0) {
+  const performSearch = async () => {
+    if (!searchQuery.trim()) return;
+    if (!isConnected) {
       toast({
-        title: "No Results",
-        description: "Please perform a search first",
+        title: "Service Unavailable",
+        description: "Research requires backend connection",
         variant: "destructive"
       });
       return;
     }
 
-    toast({
-      title: "Summary Generation Not Available",
-      description: "AI summary generation requires backend integration to function properly"
-    });
+    setIsSearching(true);
+    setSearchResults([]);
+    
+    try {
+      const response = await aiRoutingService.sendMessageWithRouting(
+        `Research: ${searchQuery}`, 
+        { 
+          component: 'research_tool',
+          searchEngine,
+          contentFilter,
+          query: searchQuery
+        }
+      );
+      
+      // Parse response for search results if available
+      if (response.results) {
+        setSearchResults(response.results);
+      }
+    } catch (error) {
+      toast({
+        title: "Search Failed",
+        description: "Unable to perform research. Backend service unavailable.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
-  const handleSendMessage = (message: string) => {
+  const handleSendMessage = async (message: string) => {
+    if (!isConnected) {
+      toast({
+        title: "Service Unavailable",
+        description: "Research assistant requires backend connection",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setMessages(prev => [...prev, { role: 'user', content: message }]);
     
-    // Removed fake AI responses
-    setTimeout(() => {
+    try {
+      const response = await aiRoutingService.sendMessageWithRouting(message, { 
+        component: 'research_tool',
+        context: searchResults.length > 0 ? { searchResults } : {}
+      });
+      
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: "Research AI assistant is not yet connected to backend services. Advanced research features require proper integration to function." 
+        content: response.content || "No response received"
       }]);
-    }, 1000);
+    } catch (error) {
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: "Error: Unable to process request. Backend service unavailable."
+      }]);
+    }
   };
 
   return (
     <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 flex">
       <div className="flex-1 flex flex-col">
-        {/* Header */}
         <div className="border-b border-white/10 p-4 bg-black/20 backdrop-blur-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg flex items-center justify-center">
                 <BookOpen className="w-4 h-4 text-white" />
               </div>
-              <h2 className="text-xl font-semibold text-white">AI Research Tool</h2>
+              <h2 className="text-xl font-semibold text-white">Research Tool</h2>
               <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                AI-Powered Research
+                AI Research
               </Badge>
-              {aiAnalysis && (
-                <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-                  <Brain className="w-3 h-3 mr-1" />
-                  AI (Not Connected)
-                </Badge>
-              )}
-              {factChecking && (
-                <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                  <Shield className="w-3 h-3 mr-1" />
-                  Fact-Check (Not Available)
-                </Badge>
-              )}
+              <Badge className={isConnected ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}>
+                {isConnected ? "Connected" : "Disconnected"}
+              </Badge>
             </div>
             
             <div className="flex items-center space-x-2">
-              <Button onClick={generateResearchSummary} variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10" disabled>
-                <Brain className="w-4 h-4 mr-2" />
-                AI Summary
-              </Button>
-              <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10" disabled>
+              <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10" disabled={!isConnected}>
                 <Database className="w-4 h-4 mr-2" />
                 Save Research
               </Button>
@@ -137,20 +157,27 @@ export const ResearchTool = () => {
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="flex-1 p-6">
+          {connectionError && (
+            <Alert className="border-red-500/30 bg-red-500/10 mb-4">
+              <AlertCircle className="h-4 w-4 text-red-400" />
+              <AlertDescription className="text-red-300">
+                {connectionError}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Tabs defaultValue="search" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-white/5 border-white/10">
-              <TabsTrigger value="search" className="text-white data-[state=active]:bg-blue-500/20">AI Search</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 bg-white/5 border-white/10">
+              <TabsTrigger value="search" className="text-white data-[state=active]:bg-blue-500/20">Search</TabsTrigger>
               <TabsTrigger value="results" className="text-white data-[state=active]:bg-blue-500/20">Results</TabsTrigger>
-              <TabsTrigger value="analysis" className="text-white data-[state=active]:bg-blue-500/20">Analysis</TabsTrigger>
               <TabsTrigger value="settings" className="text-white data-[state=active]:bg-blue-500/20">Settings</TabsTrigger>
             </TabsList>
 
             <TabsContent value="search" className="mt-4 space-y-4">
               <Card className="bg-white/5 border-white/10">
                 <CardHeader>
-                  <CardTitle className="text-white">AI-Powered Research</CardTitle>
+                  <CardTitle className="text-white">Research Query</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex space-x-2">
@@ -159,22 +186,23 @@ export const ResearchTool = () => {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Enter your research query..."
                       className="bg-white/10 border-white/20 text-white placeholder-gray-300"
-                      onKeyPress={(e) => e.key === 'Enter' && performAIResearch()}
+                      onKeyPress={(e) => e.key === 'Enter' && performSearch()}
+                      disabled={!isConnected}
                     />
                     <Button 
-                      onClick={performAIResearch}
-                      disabled={isSearching}
-                      className="bg-blue-500 hover:bg-blue-600 text-white"
+                      onClick={performSearch}
+                      disabled={isSearching || !isConnected}
+                      className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
                     >
                       <Search className="w-4 h-4 mr-2" />
-                      {isSearching ? "Researching..." : "AI Research (Not Available)"}
+                      {isSearching ? "Searching..." : "Search"}
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-white text-sm">Search Engine</Label>
-                      <Select value={searchEngine} onValueChange={setSearchEngine} disabled>
+                      <Label className="text-white text-sm">Search Source</Label>
+                      <Select value={searchEngine} onValueChange={setSearchEngine} disabled={!isConnected}>
                         <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
                           <SelectValue />
                         </SelectTrigger>
@@ -189,7 +217,7 @@ export const ResearchTool = () => {
 
                     <div>
                       <Label className="text-white text-sm">Content Filter</Label>
-                      <Select value={contentFilter} onValueChange={setContentFilter} disabled>
+                      <Select value={contentFilter} onValueChange={setContentFilter} disabled={!isConnected}>
                         <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
                           <SelectValue />
                         </SelectTrigger>
@@ -201,46 +229,6 @@ export const ResearchTool = () => {
                         </SelectContent>
                       </Select>
                     </div>
-
-                    <div>
-                      <Label className="text-white text-sm">Research Depth</Label>
-                      <Select value={aiSettings.researchDepth} onValueChange={(value) => setAiSettings(prev => ({ ...prev, researchDepth: value }))} disabled>
-                        <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-900 border-white/10">
-                          <SelectItem value="quick">Quick Overview</SelectItem>
-                          <SelectItem value="standard">Standard Research</SelectItem>
-                          <SelectItem value="comprehensive">Comprehensive</SelectItem>
-                          <SelectItem value="expert">Expert Level</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-4 p-4 bg-white/5 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <Switch checked={aiAnalysis} onCheckedChange={setAiAnalysis} disabled />
-                      <span className="text-white text-sm">AI Analysis (Not Available)</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch checked={factChecking} onCheckedChange={setFactChecking} disabled />
-                      <span className="text-white text-sm">Fact Checking (Not Available)</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch checked={sourceVerification} onCheckedChange={setSourceVerification} disabled />
-                      <span className="text-white text-sm">Source Verification (Not Available)</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch checked={deepResearch} onCheckedChange={setDeepResearch} disabled />
-                      <span className="text-white text-sm">Deep Research (Not Available)</span>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
-                    <p className="text-red-400 text-sm">
-                      ⚠️ AI research features require backend integration with search APIs, AI models, and fact-checking services
-                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -259,82 +247,56 @@ export const ResearchTool = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="text-center text-gray-400 py-12">
-                    <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No research results available. Research functionality requires backend integration.</p>
-                  </div>
+                  {searchResults.length === 0 ? (
+                    <div className="text-center text-gray-400 py-12">
+                      <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No search results yet. {isConnected ? "Enter a query to start researching." : "Connect backend services to enable research."}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {searchResults.map((result, index) => (
+                        <Card key={index} className="bg-white/5 border-white/10">
+                          <CardContent className="p-4">
+                            <h4 className="text-white font-medium mb-2">{result.title}</h4>
+                            <p className="text-gray-300 text-sm mb-2">{result.snippet}</p>
+                            <div className="flex items-center justify-between text-xs text-gray-400">
+                              <span>{result.source}</span>
+                              {result.datePublished && <span>{result.datePublished}</span>}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            </TabsContent>
-
-            <TabsContent value="analysis" className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="bg-white/5 border-white/10">
-                  <CardHeader>
-                    <CardTitle className="text-white">Research Analytics</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <TrendingUp className="w-12 h-12 mx-auto mb-4 text-gray-400 opacity-50" />
-                      <p className="text-gray-400 text-sm">Analytics require backend integration</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/5 border-white/10">
-                  <CardHeader>
-                    <CardTitle className="text-white">AI Insights</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <Brain className="w-12 h-12 mx-auto mb-4 text-gray-400 opacity-50" />
-                      <p className="text-gray-400 text-sm">AI insights require backend services</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
             </TabsContent>
 
             <TabsContent value="settings" className="mt-4">
               <Card className="bg-white/5 border-white/10">
                 <CardHeader>
-                  <CardTitle className="text-white">AI Research Settings</CardTitle>
+                  <CardTitle className="text-white">Research Settings</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label className="text-white text-sm">AI Model</Label>
-                    <Select value={aiSettings.model} onValueChange={(value) => setAiSettings(prev => ({ ...prev, model: value }))} disabled>
-                      <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-white/10">
-                        <SelectItem value="gpt-4">GPT-4 (Recommended)</SelectItem>
-                        <SelectItem value="claude-3">Claude 3</SelectItem>
-                        <SelectItem value="gemini-pro">Gemini Pro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
                     <Label className="text-white text-sm">Maximum Results</Label>
-                    <Select value={aiSettings.maxResults.toString()} onValueChange={(value) => setAiSettings(prev => ({ ...prev, maxResults: parseInt(value) }))} disabled>
+                    <Select disabled={!isConnected}>
                       <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
-                        <SelectValue />
+                        <SelectValue placeholder="Select max results" />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-900 border-white/10">
                         <SelectItem value="10">10 Results</SelectItem>
                         <SelectItem value="20">20 Results</SelectItem>
                         <SelectItem value="50">50 Results</SelectItem>
-                        <SelectItem value="100">100 Results</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div>
                     <Label className="text-white text-sm">Date Range</Label>
-                    <Select value={aiSettings.dateRange} onValueChange={(value) => setAiSettings(prev => ({ ...prev, dateRange: value }))} disabled>
+                    <Select disabled={!isConnected}>
                       <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
-                        <SelectValue />
+                        <SelectValue placeholder="Select date range" />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-900 border-white/10">
                         <SelectItem value="24h">Last 24 Hours</SelectItem>
@@ -345,12 +307,6 @@ export const ResearchTool = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
-                  <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
-                    <p className="text-yellow-400 text-sm">
-                      ⚠️ Research settings are disabled until backend integration is complete
-                    </p>
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -358,14 +314,14 @@ export const ResearchTool = () => {
         </div>
       </div>
 
-      {/* AI Research Assistant */}
       <div className="w-96">
         <ChatInterface
-          title="Research Assistant AI"
-          placeholder="Research assistant AI is not yet connected..."
+          title="Research Assistant"
+          placeholder={isConnected ? "Ask research questions..." : "Connect AI service to enable chat"}
           messages={messages}
           onSendMessage={handleSendMessage}
           className="h-full"
+          disabled={!isConnected}
         />
       </div>
     </div>
