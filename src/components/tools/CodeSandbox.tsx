@@ -61,17 +61,21 @@ ${aiRequest.replace(/\s+/g, '')}();`;
 
   return (
     <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 flex flex-col">
-      <div className="border-b border-white/10 p-4 bg-black/20 backdrop-blur-lg">
-        <div className="flex items-center justify-between">
+      {/* Prominent Header with Communication */}
+      <div className="border-b border-white/10 p-6 bg-black/20 backdrop-blur-lg">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-              <Code className="w-4 h-4 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+              <Code className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-white">AI Code Sandbox</h2>
+            <div>
+              <h2 className="text-2xl font-bold text-white">AI Code Sandbox</h2>
+              <p className="text-gray-400 text-sm">Write, run, and debug code with AI assistance</p>
+            </div>
           </div>
           
           <div className="flex space-x-2">
-            <Button onClick={runCode} className="bg-green-500 hover:bg-green-600 text-white">
+            <Button onClick={runCode} className="bg-green-500 hover:bg-green-600 text-white px-6">
               <Play className="w-4 h-4 mr-2" />
               Run Code
             </Button>
@@ -82,23 +86,29 @@ ${aiRequest.replace(/\s+/g, '')}();`;
           </div>
         </div>
 
-        {/* AI Code Generation Input */}
-        <div className="mt-4 flex space-x-2">
-          <Input
-            value={aiRequest}
-            onChange={(e) => setAiRequest(e.target.value)}
-            placeholder="Describe what code you want AI to generate..."
-            className="flex-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
-            onKeyPress={(e) => e.key === 'Enter' && handleAiGenerate()}
-          />
-          <Button 
-            onClick={handleAiGenerate}
-            disabled={!aiRequest.trim()}
-            className="bg-purple-500 hover:bg-purple-600 text-white"
-          >
-            <Brain className="w-4 h-4 mr-2" />
-            Generate Code
-          </Button>
+        {/* PRIMARY COMMUNICATION INTERFACE - Most Prominent */}
+        <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 p-4 rounded-lg border border-purple-500/30">
+          <div className="flex items-center space-x-2 mb-3">
+            <Brain className="w-5 h-5 text-purple-400" />
+            <h3 className="text-white font-semibold">AI Code Assistant - Tell me what to code</h3>
+          </div>
+          <div className="flex space-x-3">
+            <Input
+              value={aiRequest}
+              onChange={(e) => setAiRequest(e.target.value)}
+              placeholder="Describe what code you want me to generate... (e.g., 'create a function to sort an array', 'build a React component for a todo list')"
+              className="flex-1 bg-white/10 border-white/20 text-white placeholder-gray-300 h-12 text-base"
+              onKeyPress={(e) => e.key === 'Enter' && handleAiGenerate()}
+            />
+            <Button 
+              onClick={handleAiGenerate}
+              disabled={!aiRequest.trim()}
+              className="bg-purple-500 hover:bg-purple-600 text-white px-6 h-12"
+            >
+              <Brain className="w-4 h-4 mr-2" />
+              Generate Code
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -147,22 +157,23 @@ ${aiRequest.replace(/\s+/g, '')}();`;
           </div>
         </div>
 
-        {/* AI Assistant Chat */}
-        <div className="w-80 border-l border-white/10 flex flex-col">
-          <div className="p-4 border-b border-white/10 bg-black/20">
-            <h3 className="text-white font-medium flex items-center">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              AI Assistant
+        {/* PROMINENT AI Chat Assistant */}
+        <div className="w-96 border-l border-white/10 flex flex-col bg-gradient-to-b from-purple-900/20 to-blue-900/20">
+          <div className="p-4 border-b border-white/10 bg-black/30">
+            <h3 className="text-white font-bold text-lg flex items-center">
+              <MessageSquare className="w-5 h-5 mr-2 text-purple-400" />
+              Live AI Assistant
             </h3>
+            <p className="text-gray-300 text-sm mt-1">Ask questions, get help, debug code</p>
           </div>
           
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {chatMessages.map((message, index) => (
               <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-3 rounded-lg ${
+                <div className={`max-w-[85%] p-3 rounded-lg ${
                   message.role === 'user' 
-                    ? 'bg-blue-500/20 text-blue-100' 
-                    : 'bg-white/5 text-gray-300'
+                    ? 'bg-blue-500/30 text-blue-100 border border-blue-400/30' 
+                    : 'bg-white/10 text-gray-200 border border-white/20'
                 }`}>
                   {message.content}
                 </div>
@@ -170,20 +181,21 @@ ${aiRequest.replace(/\s+/g, '')}();`;
             ))}
           </div>
           
-          <div className="p-4 border-t border-white/10">
+          {/* PROMINENT Chat Input */}
+          <div className="p-4 border-t border-white/10 bg-black/20">
             <div className="flex space-x-2">
               <Input
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask about your code..."
-                className="flex-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
+                placeholder="Ask me anything about coding..."
+                className="flex-1 bg-white/10 border-white/20 text-white placeholder-gray-300 h-10"
                 onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
               />
               <Button
                 onClick={handleChatSubmit}
                 disabled={!chatInput.trim()}
                 size="sm"
-                className="bg-green-500 hover:bg-green-600 text-white"
+                className="bg-green-500 hover:bg-green-600 text-white px-4 h-10"
               >
                 <Send className="w-4 h-4" />
               </Button>

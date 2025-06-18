@@ -92,15 +92,15 @@ const Index = () => {
       return <AISwitch />;
     }
     
-    // Handle existing tool views
-    if (selectedAgent === 'research') {
-      return <ResearchTool />;
-    }
-    if (selectedAgent === 'sandbox') {
+    // Fix routing for coder and file manager - route to proper modules instead of chat
+    if (selectedAgent === 'coder' || selectedAgent === 'sandbox') {
       return <CodeSandbox />;
     }
-    if (selectedAgent === 'files') {
+    if (selectedAgent === 'files' || selectedAgent === 'ai-file-manager') {
       return <FileManager />;
+    }
+    if (selectedAgent === 'research') {
+      return <ResearchTool />;
     }
 
     // Handle main views

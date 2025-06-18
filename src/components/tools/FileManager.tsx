@@ -12,7 +12,8 @@ import {
   Filter,
   RefreshCw,
   Send,
-  MessageSquare
+  MessageSquare,
+  Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ export const FileManager = () => {
   const [chatInput, setChatInput] = useState('');
   const [editingFile, setEditingFile] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState('');
+  const [aiRequest, setAiRequest] = useState('');
   const [chatMessages, setChatMessages] = useState<Array<{role: string, content: string}>>([
     { role: 'assistant', content: 'Hello! I\'m your file management assistant. I can help you organize, edit, and manage your files.' }
   ]);
@@ -81,16 +83,29 @@ console.log('Editing ${fileName}');
     setChatInput('');
   };
 
+  const handleAiFileOperation = () => {
+    if (!aiRequest.trim()) return;
+    
+    setChatMessages(prev => [
+      ...prev,
+      { role: 'assistant', content: `I'll help you with "${aiRequest}". Let me process this file operation.` }
+    ]);
+    setAiRequest('');
+  };
+
   return (
     <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 flex flex-col">
-      {/* Header */}
-      <div className="border-b border-white/10 p-4 bg-black/20 backdrop-blur-lg">
-        <div className="flex items-center justify-between mb-4">
+      {/* Prominent Header with Communication */}
+      <div className="border-b border-white/10 p-6 bg-black/20 backdrop-blur-lg">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-green-500 rounded-lg flex items-center justify-center">
-              <FolderOpen className="w-4 h-4 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-r from-teal-500 to-green-500 rounded-lg flex items-center justify-center">
+              <FolderOpen className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-white">File Manager</h2>
+            <div>
+              <h2 className="text-2xl font-bold text-white">AI File Manager</h2>
+              <p className="text-gray-400 text-sm">Organize and manage files with AI assistance</p>
+            </div>
           </div>
           
           <div className="flex items-center space-x-2">
@@ -104,6 +119,31 @@ console.log('Editing ${fileName}');
             </Button>
             <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
               <RefreshCw className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* PRIMARY AI COMMUNICATION INTERFACE */}
+        <div className="bg-gradient-to-r from-teal-500/20 to-green-500/20 p-4 rounded-lg border border-teal-500/30 mb-4">
+          <div className="flex items-center space-x-2 mb-3">
+            <Brain className="w-5 h-5 text-teal-400" />
+            <h3 className="text-white font-semibold">AI File Assistant - Tell me what to do with files</h3>
+          </div>
+          <div className="flex space-x-3">
+            <Input
+              value={aiRequest}
+              onChange={(e) => setAiRequest(e.target.value)}
+              placeholder="Ask me to organize files, find duplicates, create folders, analyze content... (e.g., 'organize images by date', 'find all Python files')"
+              className="flex-1 bg-white/10 border-white/20 text-white placeholder-gray-300 h-12 text-base"
+              onKeyPress={(e) => e.key === 'Enter' && handleAiFileOperation()}
+            />
+            <Button 
+              onClick={handleAiFileOperation}
+              disabled={!aiRequest.trim()}
+              className="bg-teal-500 hover:bg-teal-600 text-white px-6 h-12"
+            >
+              <Brain className="w-4 h-4 mr-2" />
+              Execute
             </Button>
           </div>
         </div>
@@ -220,13 +260,13 @@ console.log('Editing ${fileName}');
           </div>
         </div>
 
-        {/* Side Panel */}
-        <div className="w-96 border-l border-white/10 flex flex-col">
+        {/* PROMINENT AI Assistant */}
+        <div className="w-96 border-l border-white/10 flex flex-col bg-gradient-to-b from-teal-900/20 to-green-900/20">
           <Tabs defaultValue="chat" className="h-full flex flex-col">
             <TabsList className="bg-white/5 border-b border-white/10 rounded-none">
               <TabsTrigger value="chat" className="text-white">
                 <MessageSquare className="w-4 h-4 mr-2" />
-                Assistant
+                AI Assistant
               </TabsTrigger>
               {editingFile && (
                 <TabsTrigger value="editor" className="text-white">
@@ -238,16 +278,17 @@ console.log('Editing ${fileName}');
 
             <TabsContent value="chat" className="flex-1 m-0 flex flex-col">
               <div className="p-4 border-b border-white/10 bg-black/20">
-                <h3 className="text-white font-medium">File Assistant</h3>
+                <h3 className="text-white font-bold text-lg">AI File Assistant</h3>
+                <p className="text-gray-300 text-sm mt-1">Ask me to help with file operations</p>
               </div>
               
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {chatMessages.map((message, index) => (
                   <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] p-3 rounded-lg ${
+                    <div className={`max-w-[85%] p-3 rounded-lg ${
                       message.role === 'user' 
-                        ? 'bg-blue-500/20 text-blue-100' 
-                        : 'bg-white/5 text-gray-300'
+                        ? 'bg-blue-500/30 text-blue-100 border border-blue-400/30' 
+                        : 'bg-white/10 text-gray-200 border border-white/20'
                     }`}>
                       {message.content}
                     </div>
@@ -255,20 +296,20 @@ console.log('Editing ${fileName}');
                 ))}
               </div>
               
-              <div className="p-4 border-t border-white/10">
+              <div className="p-4 border-t border-white/10 bg-black/20">
                 <div className="flex space-x-2">
                   <Input
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     placeholder="Ask about file operations..."
-                    className="flex-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
+                    className="flex-1 bg-white/10 border-white/20 text-white placeholder-gray-300 h-10"
                     onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
                   />
                   <Button
                     onClick={handleChatSubmit}
                     disabled={!chatInput.trim()}
                     size="sm"
-                    className="bg-teal-500 hover:bg-teal-600 text-white"
+                    className="bg-teal-500 hover:bg-teal-600 text-white px-4 h-10"
                   >
                     <Send className="w-4 h-4" />
                   </Button>
