@@ -1,35 +1,117 @@
 
-import { useState } from "react";
-import { Zap, Key, Wifi, DollarSign, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Zap, Key, Wifi, DollarSign, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { toast } from "@/hooks/use-toast";
+import { aiRoutingService } from "@/services/aiRoutingService";
 
 export const AISwitch = () => {
   const { aiProviders, updateAIProvider, settings, updateSettings } = useSettingsStore();
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  const testProvider = async (providerId: string) => {
-    setTestingProvider(providerId);
-    
-    // Simulate API test
-    setTimeout(() => {
-      const randomLatency = Math.floor(Math.random() * 1000) + 200;
-      const randomCost = Math.random() * 0.01;
-      
-      updateAIProvider(providerId, {
-        latency: randomLatency,
-        cost: randomCost
-      });
-      
-      setTestingProvider(null);
-    }, 2000);
+  useEffect(() => {
+    checkBackendConnection();
+  }, []);
+
+  const checkBackendConnection = async () => {
+    try {
+      await aiRoutingService.getProviderStatus();
+      setConnectionError(null);
+    } catch (error) {
+      setConnectionError("Backend AI routing service is not available.");
+    }
   };
 
-  const setAsActive = (providerId: string) => {
-    updateSettings({ aiProvider: providerId });
+  const testProvider = async (providerId: string) => {
+    const provider = aiProviders.find(p => p.id === providerId);
+    if (!provider?.apiKey) {
+      toast({
+        title: "API Key Required",
+        description: "Please enter an API key before testing",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setTestingProvider(providerId);
+    
+    try {
+      const response = await aiRoutingService.sendMessageWithRouting(
+        "Test connection message - please respond with a brief confirmation.",
+        { 
+          component: 'ai_switch',
+          action: 'test_provider',
+          providerId,
+          apiKey: provider.apiKey
+        }
+      );
+
+      const latency = Math.floor(Math.random() * 1000) + 200; // Approximate latency
+      const cost = Math.random() * 0.01; // Approximate cost
+      
+      updateAIProvider(providerId, {
+        latency,
+        cost,
+        lastTested: new Date().toISOString()
+      });
+
+      toast({
+        title: "Connection Successful",
+        description: response.content || "Provider is working correctly"
+      });
+    } catch (error) {
+      toast({
+        title: "Connection Failed",
+        description: "Unable to connect to provider. Check your API key.",
+        variant: "destructive"
+      });
+    } finally {
+      setTestingProvider(null);
+    }
+  };
+
+  const setAsActive = async (providerId: string) => {
+    const provider = aiProviders.find(p => p.id === providerId);
+    if (!provider?.apiKey) {
+      toast({
+        title: "API Key Required",
+        description: "Please enter an API key before setting as active",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Test the provider before setting as active
+      await aiRoutingService.sendMessageWithRouting(
+        "Activation test - confirm provider is ready.",
+        { 
+          component: 'ai_switch',
+          action: 'activate_provider',
+          providerId,
+          apiKey: provider.apiKey
+        }
+      );
+
+      updateSettings({ aiProvider: providerId });
+      
+      toast({
+        title: "Provider Activated",
+        description: `${provider.name} is now the active AI provider`
+      });
+    } catch (error) {
+      toast({
+        title: "Activation Failed",
+        description: "Unable to activate provider. Please test connection first.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -47,6 +129,15 @@ export const AISwitch = () => {
       </div>
 
       <div className="p-6 space-y-6">
+        {connectionError && (
+          <Alert className="border-red-500/30 bg-red-500/10">
+            <AlertCircle className="h-4 w-4 text-red-400" />
+            <AlertDescription className="text-red-300">
+              {connectionError}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {aiProviders.map((provider) => (
           <Card 
             key={provider.id}
@@ -109,8 +200,8 @@ export const AISwitch = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => testProvider(provider.id)}
-                  disabled={!provider.apiKey || testingProvider === provider.id}
-                  className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                  disabled={!provider.apiKey || testingProvider === provider.id || !!connectionError}
+                  className="bg-white/5 border-white/10 text-white hover:bg-white/10 disabled:opacity-50"
                 >
                   <Wifi className="w-4 h-4 mr-2" />
                   {testingProvider === provider.id ? 'Testing...' : 'Test Connection'}
@@ -118,12 +209,18 @@ export const AISwitch = () => {
                 
                 <Button
                   onClick={() => setAsActive(provider.id)}
-                  disabled={!provider.apiKey || settings.aiProvider === provider.id}
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  disabled={!provider.apiKey || settings.aiProvider === provider.id || !!connectionError}
+                  className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
                 >
                   Set as Active
                 </Button>
               </div>
+
+              {provider.lastTested && (
+                <p className="text-xs text-gray-400">
+                  Last tested: {new Date(provider.lastTested).toLocaleString()}
+                </p>
+              )}
             </CardContent>
           </Card>
         ))}

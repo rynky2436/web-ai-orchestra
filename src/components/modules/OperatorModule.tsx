@@ -1,11 +1,16 @@
 
-import { useState } from "react";
-import { Monitor, Terminal, Chrome, Settings, Play, Square, Send, MessageSquare } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Monitor, Terminal, Chrome, Settings, Play, Square, Send, MessageSquare, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "@/hooks/use-toast";
+import { aiRoutingService } from "@/services/aiRoutingService";
+
+const PRE_PROMPT = "You are a system operator AI. You help the user execute OS-level commands, launch programs, and manage processes.";
 
 export const OperatorModule = () => {
   const [command, setCommand] = useState('');
@@ -15,30 +20,137 @@ export const OperatorModule = () => {
   const [chatMessages, setChatMessages] = useState<Array<{role: string, content: string}>>([
     { role: 'assistant', content: 'Hello! I\'m your system operator assistant. I can help you execute commands, manage processes, and control system operations.' }
   ]);
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  const executeCommand = () => {
+  useEffect(() => {
+    checkBackendConnection();
+  }, []);
+
+  const checkBackendConnection = async () => {
+    try {
+      const providers = await aiRoutingService.getProviderStatus();
+      const hasConnectedProvider = providers.some(p => p.connected);
+      setIsConnected(hasConnectedProvider);
+      
+      if (!hasConnectedProvider) {
+        setConnectionError("No AI providers connected. System operator features are unavailable.");
+      } else {
+        setConnectionError(null);
+      }
+    } catch (error) {
+      setIsConnected(false);
+      setConnectionError("Backend services are not available.");
+    }
+  };
+
+  const executeCommand = async () => {
     if (!command.trim()) return;
+
+    if (!isConnected) {
+      toast({
+        title: "Service Unavailable",
+        description: "Command execution requires backend connection",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setIsRunning(true);
     setLogs(prev => [...prev, `> ${command}`]);
     
-    // Simulate command execution
-    setTimeout(() => {
-      setLogs(prev => [...prev, `Executed: ${command}`, 'Command completed successfully']);
+    try {
+      const response = await aiRoutingService.sendMessageWithRouting(
+        `${PRE_PROMPT}\n\nExecute this system command: ${command}`,
+        { 
+          component: 'operator_module',
+          action: 'execute_command',
+          command
+        }
+      );
+      
+      setLogs(prev => [...prev, response.content || 'Command executed - no output received']);
+    } catch (error) {
+      setLogs(prev => [...prev, `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`]);
+      toast({
+        title: "Command Failed",
+        description: "Unable to execute command. Backend service unavailable.",
+        variant: "destructive"
+      });
+    } finally {
       setIsRunning(false);
       setCommand('');
-    }, 2000);
+    }
   };
 
-  const handleChatSubmit = () => {
+  const handleChatSubmit = async () => {
     if (!chatInput.trim()) return;
+
+    if (!isConnected) {
+      toast({
+        title: "Service Unavailable",
+        description: "System assistant requires backend connection",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setChatMessages(prev => [
       ...prev,
-      { role: 'user', content: chatInput },
-      { role: 'assistant', content: `I'll help you with "${chatInput}". Let me process this system operation request.` }
+      { role: 'user', content: chatInput }
     ]);
+
+    try {
+      const response = await aiRoutingService.sendMessageWithRouting(
+        `${PRE_PROMPT}\n\n${chatInput}`,
+        { 
+          component: 'operator_module',
+          context: { recentCommands: logs.slice(-5) }
+        }
+      );
+      
+      setChatMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: response.content || "No response received from AI backend" }
+      ]);
+    } catch (error) {
+      setChatMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: "Error: Unable to process request. Backend service unavailable." }
+      ]);
+    }
+
     setChatInput('');
+  };
+
+  const launchTool = async (tool: string) => {
+    if (!isConnected) {
+      toast({
+        title: "Service Unavailable",
+        description: "Tool launching requires backend connection",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const response = await aiRoutingService.sendMessageWithRouting(
+        `${PRE_PROMPT}\n\nLaunch ${tool} application or tool.`,
+        { 
+          component: 'operator_module',
+          action: 'launch_tool',
+          tool
+        }
+      );
+
+      setLogs(prev => [...prev, `Launching ${tool}...`, response.content || `${tool} launched successfully`]);
+    } catch (error) {
+      toast({
+        title: "Launch Failed",
+        description: `Unable to launch ${tool}. Backend service unavailable.`,
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -49,8 +161,8 @@ export const OperatorModule = () => {
             <Monitor className="w-4 h-4 text-white" />
           </div>
           <h2 className="text-xl font-semibold text-white">System Operator</h2>
-          <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
-            Full Access
+          <Badge className={isConnected ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}>
+            {isConnected ? "Connected" : "Disconnected"}
           </Badge>
         </div>
 
@@ -65,8 +177,8 @@ export const OperatorModule = () => {
           />
           <Button
             onClick={executeCommand}
-            disabled={!command.trim() || isRunning}
-            className="bg-red-500 hover:bg-red-600 text-white"
+            disabled={!command.trim() || isRunning || !isConnected}
+            className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
           >
             {isRunning ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             {isRunning ? 'Stop' : 'Execute'}
@@ -77,6 +189,15 @@ export const OperatorModule = () => {
       <div className="flex-1 flex">
         {/* Main Content */}
         <div className="flex-1 p-6 space-y-6">
+          {connectionError && (
+            <Alert className="border-red-500/30 bg-red-500/10">
+              <AlertCircle className="h-4 w-4 text-red-400" />
+              <AlertDescription className="text-red-300">
+                {connectionError}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="bg-white/5 border-white/10">
               <CardHeader>
@@ -87,9 +208,13 @@ export const OperatorModule = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-300 text-sm mb-4">
-                  Execute system commands and scripts with full access.
+                  Execute system commands and scripts with AI assistance.
                 </p>
-                <Button className="w-full bg-red-500 hover:bg-red-600 text-white">
+                <Button 
+                  onClick={() => launchTool('terminal')}
+                  disabled={!isConnected}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+                >
                   Open Terminal
                 </Button>
               </CardContent>
@@ -104,9 +229,13 @@ export const OperatorModule = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-300 text-sm mb-4">
-                  Full Chrome automation and control capabilities.
+                  AI-powered Chrome automation and control capabilities.
                 </p>
-                <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white">
+                <Button 
+                  onClick={() => launchTool('browser')}
+                  disabled={!isConnected}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50"
+                >
                   Launch Browser
                 </Button>
               </CardContent>
@@ -121,9 +250,13 @@ export const OperatorModule = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-300 text-sm mb-4">
-                  Modify system configurations and preferences.
+                  Modify system configurations with AI guidance.
                 </p>
-                <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
+                <Button 
+                  onClick={() => launchTool('settings')}
+                  disabled={!isConnected}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white disabled:opacity-50"
+                >
                   Open Settings
                 </Button>
               </CardContent>
@@ -146,7 +279,7 @@ export const OperatorModule = () => {
                 </div>
               ) : (
                 <div className="bg-black/20 rounded-lg p-4 text-center text-gray-500">
-                  Command output will appear here...
+                  {isConnected ? "Command output will appear here..." : "Backend connection required for command execution"}
                 </div>
               )}
             </CardContent>
@@ -181,15 +314,15 @@ export const OperatorModule = () => {
               <Input
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask about system operations..."
+                placeholder={isConnected ? "Ask about system operations..." : "Connect AI service to enable chat"}
                 className="flex-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
                 onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
               />
               <Button
                 onClick={handleChatSubmit}
-                disabled={!chatInput.trim()}
+                disabled={!chatInput.trim() || !isConnected}
                 size="sm"
-                className="bg-red-500 hover:bg-red-600 text-white"
+                className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
               >
                 <Send className="w-4 h-4" />
               </Button>
