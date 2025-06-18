@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { MessageSquare, Users, TrendingUp, Calendar, BarChart3, Image, Hash, Settings, Play, Pause, Upload, Wand2 } from "lucide-react";
+import { MessageSquare, Users, TrendingUp, Calendar, BarChart3, Image, Hash, Settings, Play, Pause, Upload, Wand2, Key, Monitor, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { AIChat } from "@/components/shared/AIChat";
+import { toast } from "@/hooks/use-toast";
 
 export const AISocialManager = () => {
   const [isActive, setIsActive] = useState(false);
@@ -16,35 +20,112 @@ export const AISocialManager = () => {
   const [content, setContent] = useState('');
   const [includeAIImage, setIncludeAIImage] = useState(false);
   const [imagePrompt, setImagePrompt] = useState('');
+  const [aiMonitoring, setAiMonitoring] = useState(true);
+  const [autoResponse, setAutoResponse] = useState(false);
+
+  const [platformCredentials, setPlatformCredentials] = useState({
+    twitter: { username: '', password: '', apiKey: '', apiSecret: '', accessToken: '', accessTokenSecret: '' },
+    instagram: { username: '', password: '', accessToken: '', clientId: '', clientSecret: '' },
+    facebook: { username: '', password: '', pageId: '', accessToken: '', appId: '', appSecret: '' },
+    linkedin: { username: '', password: '', clientId: '', clientSecret: '', accessToken: '' },
+    tiktok: { username: '', password: '', accessToken: '', clientKey: '', clientSecret: '' },
+    youtube: { username: '', password: '', apiKey: '', channelId: '', clientId: '', clientSecret: '' },
+    snapchat: { username: '', password: '', clientId: '', clientSecret: '', accessToken: '' },
+    pinterest: { username: '', password: '', accessToken: '', appId: '', appSecret: '' },
+    discord: { username: '', password: '', botToken: '', clientId: '', clientSecret: '' },
+    telegram: { botToken: '', chatId: '', apiHash: '' },
+    reddit: { username: '', password: '', clientId: '', clientSecret: '', userAgent: '' },
+    whatsapp: { phoneNumber: '', accessToken: '', webhookToken: '' }
+  });
 
   const platforms = [
-    { id: 'twitter', name: 'Twitter/X', status: 'connected', followers: '2.4K' },
-    { id: 'instagram', name: 'Instagram', status: 'connected', followers: '5.1K' },
-    { id: 'linkedin', name: 'LinkedIn', status: 'disconnected', followers: '890' },
-    { id: 'facebook', name: 'Facebook', status: 'connected', followers: '3.2K' },
-    { id: 'tiktok', name: 'TikTok', status: 'disconnected', followers: '12K' }
+    { id: 'twitter', name: 'Twitter/X', status: 'connected', followers: '2.4K', color: 'bg-blue-500' },
+    { id: 'instagram', name: 'Instagram', status: 'connected', followers: '5.1K', color: 'bg-pink-500' },
+    { id: 'facebook', name: 'Facebook', status: 'disconnected', followers: '3.2K', color: 'bg-blue-600' },
+    { id: 'linkedin', name: 'LinkedIn', status: 'disconnected', followers: '890', color: 'bg-blue-700' },
+    { id: 'tiktok', name: 'TikTok', status: 'disconnected', followers: '12K', color: 'bg-black' },
+    { id: 'youtube', name: 'YouTube', status: 'connected', followers: '8.3K', color: 'bg-red-500' },
+    { id: 'snapchat', name: 'Snapchat', status: 'disconnected', followers: '1.2K', color: 'bg-yellow-400' },
+    { id: 'pinterest', name: 'Pinterest', status: 'disconnected', followers: '923', color: 'bg-red-600' },
+    { id: 'discord', name: 'Discord', status: 'connected', followers: '456', color: 'bg-indigo-500' },
+    { id: 'telegram', name: 'Telegram', status: 'disconnected', followers: '789', color: 'bg-blue-400' },
+    { id: 'reddit', name: 'Reddit', status: 'disconnected', followers: '2.1K', color: 'bg-orange-500' },
+    { id: 'whatsapp', name: 'WhatsApp Business', status: 'disconnected', followers: 'N/A', color: 'bg-green-500' }
   ];
 
-  const quickActions = [
-    { id: 'generate-post', label: 'Generate Post', icon: MessageSquare },
-    { id: 'create-image', label: 'Create AI Image', icon: Wand2 },
-    { id: 'schedule-content', label: 'Schedule Content', icon: Calendar },
-    { id: 'analyze-engagement', label: 'Analyze Engagement', icon: BarChart3 },
-    { id: 'find-trending', label: 'Find Trending Topics', icon: TrendingUp },
-    { id: 'create-hashtags', label: 'Generate Hashtags', icon: Hash }
-  ];
+  const handleCredentialUpdate = (platform: string, field: string, value: string) => {
+    setPlatformCredentials(prev => ({
+      ...prev,
+      [platform]: {
+        ...prev[platform as keyof typeof prev],
+        [field]: value
+      }
+    }));
+  };
 
-  const handleGenerateWithImage = async () => {
-    console.log('Generating post with AI image:', {
-      content,
-      imagePrompt,
-      platform: selectedPlatform
+  const testConnection = async (platform: string) => {
+    toast({
+      title: "Testing Connection",
+      description: `Connecting to ${platform}...`
     });
+    
+    // Simulate API connection test
+    setTimeout(() => {
+      toast({
+        title: "Connection Successful",
+        description: `Successfully connected to ${platform}`
+      });
+    }, 2000);
+  };
+
+  const generateAIContent = async () => {
+    if (!content.trim()) {
+      toast({
+        title: "Content Required",
+        description: "Please describe what content you want to create",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "AI Generating Content",
+      description: "Creating engaging content based on your input..."
+    });
+
+    // Simulate AI content generation
+    setTimeout(() => {
+      const generatedContent = `🚀 Exciting news! ${content} 
+
+#AI #Innovation #Technology #SocialMedia
+
+What do you think? Let me know in the comments! 👇`;
+      
+      setContent(generatedContent);
+      toast({
+        title: "Content Generated",
+        description: "AI has created optimized content for your post"
+      });
+    }, 3000);
   };
 
   const handleAIMessage = (message: string) => {
     console.log('Social Media AI received:', message);
-    // Handle AI social media requests
+    
+    // AI logic for social media management
+    if (message.toLowerCase().includes('create post')) {
+      generateAIContent();
+    } else if (message.toLowerCase().includes('schedule')) {
+      toast({
+        title: "AI Scheduling",
+        description: "Analyzing optimal posting times for your content..."
+      });
+    } else if (message.toLowerCase().includes('analyze')) {
+      toast({
+        title: "AI Analysis",
+        description: "Performing engagement analysis across all platforms..."
+      });
+    }
   };
 
   return (
@@ -60,6 +141,12 @@ export const AISocialManager = () => {
             <Badge className={`${isActive ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-gray-500/20 text-gray-400 border-gray-500/30'}`}>
               {isActive ? 'Active' : 'Standby'}
             </Badge>
+            {aiMonitoring && (
+              <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                <Monitor className="w-3 h-3 mr-1" />
+                AI Monitoring
+              </Badge>
+            )}
           </div>
           <Button
             onClick={() => setIsActive(!isActive)}
@@ -75,22 +162,28 @@ export const AISocialManager = () => {
         {/* Main Content Area */}
         <div className="flex-1 p-6 overflow-y-auto">
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-white/5 border-white/10">
+            <TabsList className="grid w-full grid-cols-5 bg-white/5 border-white/10">
               <TabsTrigger value="dashboard" className="text-white data-[state=active]:bg-pink-500/20">Dashboard</TabsTrigger>
               <TabsTrigger value="content" className="text-white data-[state=active]:bg-pink-500/20">Content Creator</TabsTrigger>
               <TabsTrigger value="analytics" className="text-white data-[state=active]:bg-pink-500/20">Analytics</TabsTrigger>
+              <TabsTrigger value="platforms" className="text-white data-[state=active]:bg-pink-500/20">Platforms</TabsTrigger>
               <TabsTrigger value="settings" className="text-white data-[state=active]:bg-pink-500/20">Settings</TabsTrigger>
             </TabsList>
 
             <TabsContent value="dashboard" className="mt-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {quickActions.map((action) => (
-                  <Card key={action.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer">
-                    <CardContent className="p-4 flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-rose-500 rounded-lg flex items-center justify-center">
-                        <action.icon className="w-5 h-5 text-white" />
+                {platforms.slice(0, 6).map((platform) => (
+                  <Card key={platform.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className={`w-3 h-3 rounded-full ${platform.color}`}></div>
+                        <Badge className={platform.status === 'connected' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
+                          {platform.status === 'connected' ? <CheckCircle className="w-3 h-3 mr-1" /> : <AlertCircle className="w-3 h-3 mr-1" />}
+                          {platform.status}
+                        </Badge>
                       </div>
-                      <span className="text-white font-medium">{action.label}</span>
+                      <h3 className="text-white font-medium">{platform.name}</h3>
+                      <p className="text-gray-400 text-sm">{platform.followers} followers</p>
                     </CardContent>
                   </Card>
                 ))}
@@ -98,21 +191,22 @@ export const AISocialManager = () => {
 
               <Card className="bg-white/5 border-white/10">
                 <CardHeader>
-                  <CardTitle className="text-white">Connected Platforms</CardTitle>
+                  <CardTitle className="text-white">AI Monitoring Status</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {platforms.map((platform) => (
-                      <div key={platform.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                        <div>
-                          <p className="text-white font-medium">{platform.name}</p>
-                          <p className="text-gray-400 text-sm">{platform.followers} followers</p>
-                        </div>
-                        <Badge className={platform.status === 'connected' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
-                          {platform.status}
-                        </Badge>
-                      </div>
-                    ))}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-2">
+                      <Monitor className="w-4 h-4 text-blue-400" />
+                      <Label className="text-white">Enable AI Monitoring</Label>
+                    </div>
+                    <Switch checked={aiMonitoring} onCheckedChange={setAiMonitoring} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <MessageSquare className="w-4 h-4 text-green-400" />
+                      <Label className="text-white">Auto-respond to Mentions</Label>
+                    </div>
+                    <Switch checked={autoResponse} onCheckedChange={setAutoResponse} />
                   </div>
                 </CardContent>
               </Card>
@@ -130,10 +224,9 @@ export const AISocialManager = () => {
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-white/10">
                       <SelectItem value="all">All Platforms</SelectItem>
-                      <SelectItem value="twitter">Twitter/X</SelectItem>
-                      <SelectItem value="instagram">Instagram</SelectItem>
-                      <SelectItem value="linkedin">LinkedIn</SelectItem>
-                      <SelectItem value="facebook">Facebook</SelectItem>
+                      {platforms.map(platform => (
+                        <SelectItem key={platform.id} value={platform.id}>{platform.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   
@@ -153,41 +246,116 @@ export const AISocialManager = () => {
                   </div>
 
                   {includeAIImage && (
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-300">Image Description</label>
-                      <Input
-                        value={imagePrompt}
-                        onChange={(e) => setImagePrompt(e.target.value)}
-                        placeholder="Describe the image you want to create for this post..."
-                        className="bg-white/5 border-white/10 text-white placeholder-gray-400"
-                      />
-                    </div>
+                    <Input
+                      value={imagePrompt}
+                      onChange={(e) => setImagePrompt(e.target.value)}
+                      placeholder="Describe the image you want to create..."
+                      className="bg-white/5 border-white/10 text-white placeholder-gray-400"
+                    />
                   )}
                   
                   <div className="flex space-x-2">
-                    <Button 
-                      onClick={includeAIImage ? handleGenerateWithImage : undefined}
-                      className="bg-pink-500 hover:bg-pink-600 text-white"
-                    >
-                      {includeAIImage ? (
-                        <>
-                          <Wand2 className="w-4 h-4 mr-2" />
-                          Generate Content + Image
-                        </>
-                      ) : (
-                        'Generate Content'
-                      )}
+                    <Button onClick={generateAIContent} className="bg-pink-500 hover:bg-pink-600 text-white">
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      Generate AI Content
                     </Button>
                     <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
                       Schedule Post
                     </Button>
-                    <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload Image
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="platforms" className="mt-6 space-y-6">
+              <div className="grid gap-6">
+                {platforms.map((platform) => (
+                  <Card key={platform.id} className="bg-white/5 border-white/10">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-4 h-4 rounded-full ${platform.color}`}></div>
+                          <CardTitle className="text-white">{platform.name}</CardTitle>
+                          <Badge className={platform.status === 'connected' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}>
+                            {platform.status}
+                          </Badge>
+                        </div>
+                        <Button size="sm" onClick={() => testConnection(platform.name)} className="bg-blue-500 hover:bg-blue-600 text-white">
+                          Test Connection
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-white text-sm">Username/Email</Label>
+                          <Input
+                            value={platformCredentials[platform.id as keyof typeof platformCredentials]?.username || ''}
+                            onChange={(e) => handleCredentialUpdate(platform.id, 'username', e.target.value)}
+                            placeholder={`${platform.name} username or email`}
+                            className="mt-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-white text-sm">Password</Label>
+                          <Input
+                            type="password"
+                            value={platformCredentials[platform.id as keyof typeof platformCredentials]?.password || ''}
+                            onChange={(e) => handleCredentialUpdate(platform.id, 'password', e.target.value)}
+                            placeholder="Password"
+                            className="mt-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
+                          />
+                        </div>
+                        {platform.id === 'twitter' && (
+                          <>
+                            <div>
+                              <Label className="text-white text-sm">API Key</Label>
+                              <Input
+                                value={platformCredentials.twitter.apiKey}
+                                onChange={(e) => handleCredentialUpdate('twitter', 'apiKey', e.target.value)}
+                                placeholder="Twitter API Key"
+                                className="mt-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-white text-sm">API Secret</Label>
+                              <Input
+                                type="password"
+                                value={platformCredentials.twitter.apiSecret}
+                                onChange={(e) => handleCredentialUpdate('twitter', 'apiSecret', e.target.value)}
+                                placeholder="API Secret"
+                                className="mt-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
+                              />
+                            </div>
+                          </>
+                        )}
+                        {platform.id === 'instagram' && (
+                          <>
+                            <div>
+                              <Label className="text-white text-sm">Access Token</Label>
+                              <Input
+                                value={platformCredentials.instagram.accessToken}
+                                onChange={(e) => handleCredentialUpdate('instagram', 'accessToken', e.target.value)}
+                                placeholder="Instagram Access Token"
+                                className="mt-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-white text-sm">Client ID</Label>
+                              <Input
+                                value={platformCredentials.instagram.clientId}
+                                onChange={(e) => handleCredentialUpdate('instagram', 'clientId', e.target.value)}
+                                placeholder="Client ID"
+                                className="mt-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </TabsContent>
 
             <TabsContent value="analytics" className="mt-6">
@@ -196,30 +364,87 @@ export const AISocialManager = () => {
                   <CardTitle className="text-white">Social Media Analytics</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-400">Analytics dashboard coming soon...</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="text-center p-4 bg-white/5 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-400">24.8K</div>
+                      <div className="text-sm text-gray-400">Total Followers</div>
+                    </div>
+                    <div className="text-center p-4 bg-white/5 rounded-lg">
+                      <div className="text-2xl font-bold text-green-400">89.2%</div>
+                      <div className="text-sm text-gray-400">Engagement Rate</div>
+                    </div>
+                    <div className="text-center p-4 bg-white/5 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-400">156</div>
+                      <div className="text-sm text-gray-400">Posts This Month</div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="settings" className="mt-6">
+            <TabsContent value="settings" className="mt-6 space-y-6">
               <Card className="bg-white/5 border-white/10">
                 <CardHeader>
-                  <CardTitle className="text-white">Platform Settings</CardTitle>
+                  <CardTitle className="text-white">AI Settings</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-gray-400">Configure API keys and permissions for each platform...</p>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-white">Enable AI Content Generation</Label>
+                    <Switch defaultChecked />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-white">Auto-schedule Optimal Times</Label>
+                    <Switch defaultChecked />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-white">AI Hashtag Suggestions</Label>
+                    <Switch defaultChecked />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-white">Smart Engagement Monitoring</Label>
+                    <Switch checked={aiMonitoring} onCheckedChange={setAiMonitoring} />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/5 border-white/10">
+                <CardHeader>
+                  <CardTitle className="text-white">API Configuration</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label className="text-white text-sm">OpenAI API Key</Label>
+                    <Input
+                      type="password"
+                      placeholder="sk-..."
+                      className="mt-1 bg-white/5 border-white/10 text-white placeholder-gray-400"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-white text-sm">Content Generation Model</Label>
+                    <Select defaultValue="gpt-4">
+                      <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-900 border-white/10">
+                        <SelectItem value="gpt-4">GPT-4</SelectItem>
+                        <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                        <SelectItem value="claude-3">Claude 3</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
         </div>
 
-        {/* Standardized AI Chat Interface */}
+        {/* AI Chat Interface */}
         <div className="w-96 border-l border-white/10">
           <AIChat
             title="Social Media AI"
             placeholder="Ask me to create posts, schedule content, analyze trends..."
-            initialMessage="Hello! I'm your AI social media manager. I can help you create engaging content, schedule posts, analyze performance, and manage your social media presence. What would you like to work on?"
+            initialMessage="Hello! I'm your AI social media manager. I can help you create engaging content, schedule posts, analyze performance, and manage your social media presence across all platforms. What would you like me to do?"
             onSendMessage={handleAIMessage}
             className="h-full"
           />
