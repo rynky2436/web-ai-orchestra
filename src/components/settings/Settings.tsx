@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { OperatorPermissions } from "./OperatorPermissions";
+import { ModelSelector } from "./ModelSelector";
 import { useSettingsStore, Theme } from "@/stores/settingsStore";
 
 export const Settings = () => {
@@ -16,8 +17,8 @@ export const Settings = () => {
   const [config, setConfig] = useState({
     openai_api_key: '',
     claude_api_key: '',
-    backend_url: 'http://localhost:8000',
-    default_model: 'gpt-4o',
+    backend_url: 'http://localhost:11434',
+    default_model: '',
     voice_enabled: false,
     auto_speak: false,
     voice_model: 'eleven_multilingual_v2',
@@ -97,6 +98,14 @@ export const Settings = () => {
       default:
         return 'bg-white/5 border-white/10 text-white placeholder-gray-400';
     }
+  };
+
+  // Determine which API key to use based on backend URL
+  const getApiKeyForBackend = () => {
+    const url = config.backend_url.toLowerCase();
+    if (url.includes('openai.com')) return config.openai_api_key;
+    if (url.includes('anthropic.com')) return config.claude_api_key;
+    return undefined; // For Ollama and other local backends
   };
 
   return (
@@ -198,7 +207,7 @@ export const Settings = () => {
               <CardTitle className={getTextClasses()}>Backend Configuration</CardTitle>
             </div>
             <CardDescription className={getSubTextClasses()}>
-              Configure your Python backend connection
+              Configure your AI backend connection and model selection
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -208,28 +217,22 @@ export const Settings = () => {
                 id="backend-url"
                 value={config.backend_url}
                 onChange={(e) => handleInputChange('backend_url', e.target.value)}
-                placeholder="http://localhost:8000"
+                placeholder="http://localhost:11434"
                 className={`mt-1 ${getInputClasses()}`}
               />
+              <div className="mt-1 text-xs text-gray-500">
+                Examples: http://localhost:11434 (Ollama), https://api.openai.com/v1 (OpenAI), https://api.anthropic.com/v1 (Claude)
+              </div>
             </div>
             
-            <div>
-              <Label htmlFor="default-model" className={getTextClasses()}>Default AI Model</Label>
-              <Select 
-                value={config.default_model} 
-                onValueChange={(value) => handleInputChange('default_model', value)}
-              >
-                <SelectTrigger className={`mt-1 ${getInputClasses()}`}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className={currentTheme === 'gradient' ? 'bg-slate-900 border-white/10' : currentTheme === 'professional' || currentTheme === 'minimal' ? 'bg-white border-gray-300' : 'bg-gray-800 border-gray-600'}>
-                  <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                  <SelectItem value="gpt-4">GPT-4</SelectItem>
-                  <SelectItem value="claude-3">Claude-3</SelectItem>
-                  <SelectItem value="ollama-llama2">Ollama Llama2</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <ModelSelector
+              backendUrl={config.backend_url}
+              apiKey={getApiKeyForBackend()}
+              currentModel={config.default_model}
+              onModelChange={(model) => handleInputChange('default_model', model)}
+              textColor={getTextClasses()}
+              inputClasses={getInputClasses()}
+            />
           </CardContent>
         </Card>
 
