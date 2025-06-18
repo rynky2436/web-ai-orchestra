@@ -1,4 +1,3 @@
-
 export interface Module {
   id: string;
   name: string;
@@ -26,6 +25,7 @@ export interface AIProvider {
   models: string[];
   latency?: number;
   cost?: number;
+  lastTested?: string;
 }
 
 export interface AppSettings {
