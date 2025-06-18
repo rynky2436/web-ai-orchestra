@@ -24,12 +24,34 @@ export interface AIResponse {
   [key: string]: any;
 }
 
-export class CustomReasoningProvider {
-  private config: Config;
+// Base provider class for unified logic
+abstract class BaseAIProvider {
+  protected config: Config;
+  
+  constructor(config: Config) {
+    this.config = config;
+  }
+  
+  abstract generateResponse(message: string, context?: any): Promise<string>;
+  
+  // Shared logic for all providers
+  protected buildContext(message: string, context: any): any {
+    return {
+      module: context?.module || 'research',
+      task_type: context?.task_type || 'general',
+      user_id: 'frontend_user',
+      message,
+      ...context
+    };
+  }
+}
+
+// Your custom reasoning provider
+export class CustomReasoningProvider extends BaseAIProvider {
   private backendUrl: string;
 
   constructor(config: Config) {
-    this.config = config;
+    super(config);
     this.backendUrl = `http://${config.host}:${config.port}`;
   }
 
@@ -40,11 +62,7 @@ export class CustomReasoningProvider {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          message: message,
-          context: context,
-          user_id: 'frontend_user'
-        })
+        body: JSON.stringify(this.buildContext(message, context))
       });
 
       if (response.ok) {
@@ -60,35 +78,211 @@ export class CustomReasoningProvider {
   }
 }
 
+// OpenAI provider
+export class OpenAIProvider extends BaseAIProvider {
+  private apiKey: string;
+
+  constructor(config: Config, apiKey: string) {
+    super(config);
+    this.apiKey = apiKey;
+  }
+
+  async generateResponse(message: string, context?: any): Promise<string> {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'system',
+              content: this.getSystemPrompt(context)
+            },
+            {
+              role: 'user',
+              content: message
+            }
+          ],
+          max_tokens: 4000,
+          temperature: 0.7
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return result.choices[0].message.content;
+      } else {
+        throw new Error(`OpenAI API Error: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('OpenAI provider error:', error);
+      return `Error: OpenAI request failed - ${error}`;
+    }
+  }
+
+  private getSystemPrompt(context: any): string {
+    const module = context?.module || 'research';
+    const prompts = {
+      research: 'You are an advanced research AI with deep reasoning capabilities. Analyze comprehensively and provide detailed findings.',
+      coding: 'You are a strategic coding AI. Design optimal architecture and generate production-ready code.',
+      decision: 'You are a decision engine AI. Apply multi-level analysis for optimal decision making.',
+      analysis: 'You are a deep analysis AI. Perform pattern recognition and provide actionable insights.',
+      memory: 'You are a memory system AI. Retrieve and consolidate information with learned insights.'
+    };
+    return prompts[module] || prompts.research;
+  }
+}
+
+// Claude provider
+export class ClaudeProvider extends BaseAIProvider {
+  private apiKey: string;
+
+  constructor(config: Config, apiKey: string) {
+    super(config);
+    this.apiKey = apiKey;
+  }
+
+  async generateResponse(message: string, context?: any): Promise<string> {
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': this.apiKey,
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-3-sonnet-20240229',
+          max_tokens: 4000,
+          system: this.getSystemPrompt(context),
+          messages: [
+            {
+              role: 'user',
+              content: message
+            }
+          ]
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return result.content[0].text;
+      } else {
+        throw new Error(`Claude API Error: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Claude provider error:', error);
+      return `Error: Claude request failed - ${error}`;
+    }
+  }
+
+  private getSystemPrompt(context: any): string {
+    const module = context?.module || 'research';
+    const prompts = {
+      research: 'You are an advanced research AI with deep reasoning capabilities. Analyze comprehensively and provide detailed findings.',
+      coding: 'You are a strategic coding AI. Design optimal architecture and generate production-ready code.',
+      decision: 'You are a decision engine AI. Apply multi-level analysis for optimal decision making.',
+      analysis: 'You are a deep analysis AI. Perform pattern recognition and provide actionable insights.',
+      memory: 'You are a memory system AI. Retrieve and consolidate information with learned insights.'
+    };
+    return prompts[module] || prompts.research;
+  }
+}
+
+// Ollama provider
+export class OllamaProvider extends BaseAIProvider {
+  async generateResponse(message: string, context?: any): Promise<string> {
+    try {
+      const response = await fetch(`${this.config.ollama_url}/api/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama2',
+          prompt: this.buildPrompt(message, context),
+          stream: false
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return result.response;
+      } else {
+        throw new Error(`Ollama API Error: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Ollama provider error:', error);
+      return `Error: Ollama request failed - ${error}`;
+    }
+  }
+
+  private buildPrompt(message: string, context: any): string {
+    const module = context?.module || 'research';
+    const systemPrompt = this.getSystemPrompt(module);
+    return `${systemPrompt}\n\nUser: ${message}\nAssistant:`;
+  }
+
+  private getSystemPrompt(module: string): string {
+    const prompts = {
+      research: 'You are an advanced research AI with deep reasoning capabilities. Analyze comprehensively and provide detailed findings.',
+      coding: 'You are a strategic coding AI. Design optimal architecture and generate production-ready code.',
+      decision: 'You are a decision engine AI. Apply multi-level analysis for optimal decision making.',
+      analysis: 'You are a deep analysis AI. Perform pattern recognition and provide actionable insights.',
+      memory: 'You are a memory system AI. Retrieve and consolidate information with learned insights.'
+    };
+    return prompts[module] || prompts.research;
+  }
+}
+
 export class ProfessionalModuleManager {
   private config: Config;
-  private reasoningProvider: CustomReasoningProvider;
+  private providers: Record<string, BaseAIProvider>;
   private modules: Record<string, any>;
 
-  constructor(config: Config) {
+  constructor(config: Config, aiProviders: Record<string, any> = {}) {
     this.config = config;
-    this.reasoningProvider = new CustomReasoningProvider(config);
+    this.providers = {};
+    
+    // Initialize all available providers
+    this.providers['custom'] = new CustomReasoningProvider(config);
+    
+    if (aiProviders.openai?.apiKey) {
+      this.providers['openai'] = new OpenAIProvider(config, aiProviders.openai.apiKey);
+    }
+    
+    if (aiProviders.claude?.apiKey) {
+      this.providers['claude'] = new ClaudeProvider(config, aiProviders.claude.apiKey);
+    }
+    
+    this.providers['ollama'] = new OllamaProvider(config);
+
+    // Initialize reasoning modules
     this.modules = {
-      'research': new ResearchModule(config, this.reasoningProvider),
-      'coding': new CodingModule(config, this.reasoningProvider),
-      'decision': new DecisionModule(config, this.reasoningProvider),
-      'analysis': new AnalysisModule(config, this.reasoningProvider),
-      'memory': new MemoryModule(config, this.reasoningProvider)
+      'research': new ResearchModule(config, this.providers),
+      'coding': new CodingModule(config, this.providers),
+      'decision': new DecisionModule(config, this.providers),
+      'analysis': new AnalysisModule(config, this.providers),
+      'memory': new MemoryModule(config, this.providers)
     };
   }
 
-  async processRequest(message: string, module: string): Promise<AIResponse> {
+  async processRequest(message: string, module: string, preferredProvider?: string): Promise<AIResponse> {
     if (!this.modules[module]) {
       return { 
         type: 'error', 
         error: `Unknown module: ${module}`, 
         timestamp: new Date().toISOString(), 
-        provider: 'custom_reasoning' 
+        provider: 'system' 
       };
     }
 
     try {
-      const result = await this.modules[module].process(message);
+      const result = await this.modules[module].process(message, preferredProvider);
       return result;
     } catch (error) {
       console.error(`Module ${module} error:`, error);
@@ -96,16 +290,37 @@ export class ProfessionalModuleManager {
         type: 'error', 
         error: `Module error: ${error}`, 
         timestamp: new Date().toISOString(), 
-        provider: 'custom_reasoning' 
+        provider: 'system' 
       };
     }
   }
+
+  getAvailableProviders(): string[] {
+    return Object.keys(this.providers);
+  }
 }
 
-class ResearchModule {
-  constructor(private config: Config, private reasoningProvider: CustomReasoningProvider) {}
+// Base module class with unified logic
+class BaseModule {
+  protected config: Config;
+  protected providers: Record<string, BaseAIProvider>;
 
-  async process(query: string): Promise<AIResponse> {
+  constructor(config: Config, providers: Record<string, BaseAIProvider>) {
+    this.config = config;
+    this.providers = providers;
+  }
+
+  protected async executeWithProvider(message: string, context: any, preferredProvider?: string): Promise<string> {
+    const provider = preferredProvider && this.providers[preferredProvider] 
+      ? this.providers[preferredProvider] 
+      : this.providers['custom'] || this.providers['openai'] || this.providers['ollama'];
+    
+    return await provider.generateResponse(message, context);
+  }
+}
+
+class ResearchModule extends BaseModule {
+  async process(query: string, preferredProvider?: string): Promise<AIResponse> {
     const researchPrompt = `
     RESEARCH TASK: ${query}
     
@@ -119,25 +334,23 @@ class ResearchModule {
     Apply multi-level decision making and semantic memory retrieval.
     `;
 
-    const response = await this.reasoningProvider.generateResponse(researchPrompt, {
+    const response = await this.executeWithProvider(researchPrompt, {
       module: 'research',
       task_type: 'comprehensive_analysis'
-    });
+    }, preferredProvider);
 
     return {
       type: 'research',
       query: query,
       findings: response,
-      provider: 'custom_reasoning',
+      provider: preferredProvider || 'custom',
       timestamp: new Date().toISOString()
     };
   }
 }
 
-class CodingModule {
-  constructor(private config: Config, private reasoningProvider: CustomReasoningProvider) {}
-
-  async process(request: string): Promise<AIResponse> {
+class CodingModule extends BaseModule {
+  async process(request: string, preferredProvider?: string): Promise<AIResponse> {
     const codingPrompt = `
     CODING TASK: ${request}
     
@@ -151,25 +364,23 @@ class CodingModule {
     Apply strategic planning and tactical coordination for complex solutions.
     `;
 
-    const response = await this.reasoningProvider.generateResponse(codingPrompt, {
+    const response = await this.executeWithProvider(codingPrompt, {
       module: 'coding',
       task_type: 'code_generation'
-    });
+    }, preferredProvider);
 
     return {
       type: 'coding',
       request: request,
       code: response,
-      provider: 'custom_reasoning',
+      provider: preferredProvider || 'custom',
       timestamp: new Date().toISOString()
     };
   }
 }
 
-class DecisionModule {
-  constructor(private config: Config, private reasoningProvider: CustomReasoningProvider) {}
-
-  async process(decision_request: string): Promise<AIResponse> {
+class DecisionModule extends BaseModule {
+  async process(decision_request: string, preferredProvider?: string): Promise<AIResponse> {
     const decisionPrompt = `
     DECISION TASK: ${decision_request}
     
@@ -183,25 +394,23 @@ class DecisionModule {
     Use your advanced reasoning capabilities for optimal decision making.
     `;
 
-    const response = await this.reasoningProvider.generateResponse(decisionPrompt, {
+    const response = await this.executeWithProvider(decisionPrompt, {
       module: 'decision',
       task_type: 'decision_analysis'
-    });
+    }, preferredProvider);
 
     return {
       type: 'decision',
       request: decision_request,
       analysis: response,
-      provider: 'custom_reasoning',
+      provider: preferredProvider || 'custom',
       timestamp: new Date().toISOString()
     };
   }
 }
 
-class AnalysisModule {
-  constructor(private config: Config, private reasoningProvider: CustomReasoningProvider) {}
-
-  async process(analysis_request: string): Promise<AIResponse> {
+class AnalysisModule extends BaseModule {
+  async process(analysis_request: string, preferredProvider?: string): Promise<AIResponse> {
     const analysisPrompt = `
     ANALYSIS TASK: ${analysis_request}
     
@@ -215,25 +424,23 @@ class AnalysisModule {
     Leverage your semantic memory and reasoning capabilities.
     `;
 
-    const response = await this.reasoningProvider.generateResponse(analysisPrompt, {
+    const response = await this.executeWithProvider(analysisPrompt, {
       module: 'analysis',
       task_type: 'deep_analysis'
-    });
+    }, preferredProvider);
 
     return {
       type: 'analysis',
       request: analysis_request,
       insights: response,
-      provider: 'custom_reasoning',
+      provider: preferredProvider || 'custom',
       timestamp: new Date().toISOString()
     };
   }
 }
 
-class MemoryModule {
-  constructor(private config: Config, private reasoningProvider: CustomReasoningProvider) {}
-
-  async process(query: string): Promise<AIResponse> {
+class MemoryModule extends BaseModule {
+  async process(query: string, preferredProvider?: string): Promise<AIResponse> {
     const memoryPrompt = `
     MEMORY QUERY: ${query}
     
@@ -247,16 +454,16 @@ class MemoryModule {
     Access your hierarchical memory system for comprehensive recall.
     `;
 
-    const response = await this.reasoningProvider.generateResponse(memoryPrompt, {
+    const response = await this.executeWithProvider(memoryPrompt, {
       module: 'memory',
       task_type: 'memory_retrieval'
-    });
+    }, preferredProvider);
 
     return {
       type: 'memory',
       query: query,
       insights: response,
-      provider: 'custom_reasoning',
+      provider: preferredProvider || 'custom',
       timestamp: new Date().toISOString()
     };
   }

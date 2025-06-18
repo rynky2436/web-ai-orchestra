@@ -2,11 +2,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Config, ProfessionalModuleManager } from '@/services/professionalAI';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 interface ProfessionalStore {
   config: Config;
   moduleManager: ProfessionalModuleManager | null;
   currentModule: string;
+  currentProvider: string;
   isProcessing: boolean;
   conversations: Array<{
     id: string;
@@ -14,10 +16,12 @@ interface ProfessionalStore {
     userMessage: string;
     aiResponse: any;
     module: string;
+    provider: string;
   }>;
   
   updateConfig: (updates: Partial<Config>) => void;
   setCurrentModule: (module: string) => void;
+  setCurrentProvider: (provider: string) => void;
   processRequest: (message: string) => Promise<any>;
   addConversation: (conversation: any) => void;
   initializePlatform: () => void;
@@ -38,23 +42,21 @@ export const useProfessionalStore = create<ProfessionalStore>()(
       config: defaultConfig,
       moduleManager: null,
       currentModule: 'research',
+      currentProvider: 'custom',
       isProcessing: false,
       conversations: [],
 
       updateConfig: (updates) => {
         const newConfig = { ...get().config, ...updates };
-        const moduleManager = new ProfessionalModuleManager(newConfig);
-        
-        set({ 
-          config: newConfig,
-          moduleManager
-        });
+        get().initializePlatform();
+        set({ config: newConfig });
       },
       
       setCurrentModule: (module) => set({ currentModule: module }),
+      setCurrentProvider: (provider) => set({ currentProvider: provider }),
 
       processRequest: async (message) => {
-        const { moduleManager, currentModule } = get();
+        const { moduleManager, currentModule, currentProvider } = get();
         
         if (!moduleManager) {
           throw new Error('Platform not initialized');
@@ -63,14 +65,15 @@ export const useProfessionalStore = create<ProfessionalStore>()(
         set({ isProcessing: true });
 
         try {
-          const result = await moduleManager.processRequest(message, currentModule);
+          const result = await moduleManager.processRequest(message, currentModule, currentProvider);
           
           const conversation = {
             id: Date.now().toString(),
             timestamp: new Date().toISOString(),
             userMessage: message,
             aiResponse: result,
-            module: currentModule
+            module: currentModule,
+            provider: currentProvider
           };
 
           get().addConversation(conversation);
@@ -88,8 +91,17 @@ export const useProfessionalStore = create<ProfessionalStore>()(
 
       initializePlatform: () => {
         const { config } = get();
-        const moduleManager = new ProfessionalModuleManager(config);
+        const settingsStore = useSettingsStore.getState();
         
+        // Get AI provider credentials from settings
+        const aiProviders = {};
+        settingsStore.aiProviders.forEach(provider => {
+          if (provider.apiKey) {
+            aiProviders[provider.id] = { apiKey: provider.apiKey };
+          }
+        });
+        
+        const moduleManager = new ProfessionalModuleManager(config, aiProviders);
         set({ moduleManager });
       }
     }),

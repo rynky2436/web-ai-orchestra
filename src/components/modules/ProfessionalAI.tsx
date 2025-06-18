@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Brain, Cpu, Search, BarChart3, Database, Settings, Play, Copy } from "lucide-react";
+import { Brain, Cpu, Search, BarChart3, Database, Settings, Play, Copy, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,26 +7,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProfessionalStore } from "@/stores/professionalStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { toast } from "@/hooks/use-toast";
 
 export const ProfessionalAI = () => {
   const {
     config,
     currentModule,
+    currentProvider,
     isProcessing,
     conversations,
     updateConfig,
     setCurrentModule,
+    setCurrentProvider,
     processRequest,
-    initializePlatform
+    initializePlatform,
+    moduleManager
   } = useProfessionalStore();
+
+  const { aiProviders } = useSettingsStore();
 
   const [message, setMessage] = useState('');
   const [response, setResponse] = useState('');
   const [showConfig, setShowConfig] = useState(false);
   const [configForm, setConfigForm] = useState({
     host: config.host || '0.0.0.0',
-    port: config.port.toString() || '7777',
+    port: config.port?.toString() || '7777',
     memory_data_dir: config.memory_data_dir || 'data/memory'
   });
 
@@ -43,6 +48,18 @@ export const ProfessionalAI = () => {
     { id: 'memory', name: 'Memory System', icon: Database, description: 'Semantic memory & learning' }
   ];
 
+  const availableProviders = moduleManager?.getAvailableProviders() || ['custom'];
+
+  const getProviderDisplayName = (providerId: string) => {
+    const providerNames = {
+      'custom': 'Custom Reasoning',
+      'openai': 'OpenAI',
+      'claude': 'Claude',
+      'ollama': 'Ollama (Local)'
+    };
+    return providerNames[providerId] || providerId;
+  };
+
   const handleSendMessage = async () => {
     if (!message.trim()) return;
 
@@ -53,12 +70,12 @@ export const ProfessionalAI = () => {
       
       toast({
         title: "Request Processed",
-        description: `Successfully processed via ${currentModule} reasoning module`
+        description: `Successfully processed via ${currentModule} module using ${getProviderDisplayName(currentProvider)}`
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to process request - ensure Python backend is running",
+        description: "Failed to process request - check your configuration",
         variant: "destructive"
       });
       console.error('Processing error:', error);
@@ -74,7 +91,7 @@ export const ProfessionalAI = () => {
 
     toast({
       title: "Configuration Updated",
-      description: "Backend connection settings have been saved"
+      description: "Platform settings have been saved"
     });
     
     setShowConfig(false);
@@ -88,9 +105,9 @@ export const ProfessionalAI = () => {
             <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
               <Brain className="w-4 h-4 text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-white">Custom Reasoning Platform</h2>
+            <h2 className="text-xl font-semibold text-white">NEXUSai Reasoning Platform</h2>
             <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-              Advanced AI Reasoning
+              Multi-Provider AI
             </Badge>
           </div>
           <Button
@@ -138,28 +155,53 @@ export const ProfessionalAI = () => {
           </Card>
         )}
 
-        <Card className="bg-white/5 border-white/10">
-          <CardHeader>
-            <CardTitle className="text-white">Active Reasoning Module</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Select value={currentModule} onValueChange={setCurrentModule}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-white/10">
-                {modules.map((module) => (
-                  <SelectItem key={module.id} value={module.id} className="text-white hover:bg-white/10">
-                    <div className="flex items-center space-x-2">
-                      <module.icon className="w-4 h-4" />
-                      <span>{module.name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="bg-white/5 border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white">Active Reasoning Module</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select value={currentModule} onValueChange={setCurrentModule}>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-white/10">
+                  {modules.map((module) => (
+                    <SelectItem key={module.id} value={module.id} className="text-white hover:bg-white/10">
+                      <div className="flex items-center space-x-2">
+                        <module.icon className="w-4 h-4" />
+                        <span>{module.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/5 border-white/10">
+            <CardHeader>
+              <CardTitle className="text-white">AI Provider</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select value={currentProvider} onValueChange={setCurrentProvider}>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-white/10">
+                  {availableProviders.map((provider) => (
+                    <SelectItem key={provider} value={provider} className="text-white hover:bg-white/10">
+                      <div className="flex items-center space-x-2">
+                        <Zap className="w-4 h-4" />
+                        <span>{getProviderDisplayName(provider)}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {modules.map((module) => (
