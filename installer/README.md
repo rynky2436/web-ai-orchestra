@@ -12,6 +12,7 @@ This installer package provides an easy way to install and set up the AI Desktop
 5. **Creates desktop shortcut** for easy access
 6. **Creates Start Menu entries** for the platform and configuration
 7. **Sets up the complete environment** ready to use
+8. **Optionally starts the server** immediately after installation
 
 ## System Requirements:
 
@@ -25,13 +26,23 @@ This installer package provides an easy way to install and set up the AI Desktop
 1. **Download** the complete AI Desktop Platform package
 2. **Right-click** on `install.bat` and select **"Run as administrator"**
 3. **Follow the prompts** - the installer will handle everything automatically
-4. **Wait for completion** - this may take 5-10 minutes depending on your internet speed
+4. **Choose to start the server** when prompted after installation
+5. **Wait for completion** - this may take 5-10 minutes depending on your internet speed
 
 ## After Installation:
 
 - **Desktop shortcut**: Double-click "AI Desktop Platform" on your desktop
 - **Start Menu**: Find "AI Desktop Platform" in your Start Menu
 - **Web Interface**: The platform will open at http://localhost:7777
+- **Auto-start**: Browser will open automatically when you launch the platform
+
+## Running the Platform:
+
+The platform runs as a local server on your computer:
+
+1. **Start**: Double-click the desktop shortcut or run `start-platform.bat`
+2. **Access**: Open http://localhost:7777 in your browser (opens automatically)
+3. **Stop**: Close the command window that appears when starting
 
 ## Configuration:
 
@@ -52,6 +63,14 @@ If you encounter issues:
 2. **Check your internet connection**
 3. **Disable antivirus temporarily** during installation
 4. **Check Windows Defender** hasn't blocked any files
+5. **Restart your computer** after installation if PATH issues occur
+
+## Technical Details:
+
+- **Backend**: Python-based AI processing server
+- **Frontend**: React web application
+- **Local Server**: Runs on localhost:7777
+- **No Internet Required**: After installation, works offline (except for AI provider API calls)
 
 ## Support:
 

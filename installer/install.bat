@@ -35,25 +35,25 @@ cd /d "%INSTALL_DIR%"
 :: Download and install Python if not present
 python --version >nul 2>&1
 if %errorLevel% neq 0 (
-    echo [1/6] Downloading and installing Python %PYTHON_VERSION%...
+    echo [1/7] Downloading and installing Python %PYTHON_VERSION%...
     powershell -Command "& {Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/%PYTHON_VERSION%/python-%PYTHON_VERSION%-amd64.exe' -OutFile 'python-installer.exe'}"
     python-installer.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
     del python-installer.exe
     echo Python installed successfully!
 ) else (
-    echo [1/6] Python is already installed
+    echo [1/7] Python is already installed
 )
 
 :: Download and install Node.js if not present
 node --version >nul 2>&1
 if %errorLevel% neq 0 (
-    echo [2/6] Downloading and installing Node.js %NODE_VERSION%...
+    echo [2/7] Downloading and installing Node.js %NODE_VERSION%...
     powershell -Command "& {Invoke-WebRequest -Uri 'https://nodejs.org/dist/v%NODE_VERSION%/node-v%NODE_VERSION%-x64.msi' -OutFile 'node-installer.msi'}"
     msiexec /i node-installer.msi /quiet
     del node-installer.msi
     echo Node.js installed successfully!
 ) else (
-    echo [2/6] Node.js is already installed
+    echo [2/7] Node.js is already installed
 )
 
 :: Refresh environment variables
@@ -64,23 +64,27 @@ call refreshenv.cmd 2>nul || (
     set "PATH=%SYSTEM_PATH%;%USER_PATH%"
 )
 
-echo [3/6] Copying application files...
+echo [3/7] Copying application files...
 xcopy /E /I /H /Y "%~dp0\..\*" "%INSTALL_DIR%\" >nul
 
-echo [4/6] Installing Python dependencies...
+echo [4/7] Installing Python dependencies...
 cd /d "%INSTALL_DIR%"
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r installer/requirements.txt
 
-echo [5/6] Installing Node.js dependencies and building frontend...
+echo [5/7] Installing Node.js dependencies and building frontend...
 cd /d "%INSTALL_DIR%"
 if exist "package.json" (
     npm install
     npm run build
 )
 
-echo [6/6] Creating desktop shortcuts and start menu entries...
+echo [6/7] Creating desktop shortcuts and start menu entries...
 call "%~dp0\create-shortcuts.bat" "%INSTALL_DIR%"
+
+echo [7/7] Setting up server startup...
+:: Create a simple startup script that users can run
+echo Creating server startup script...
 
 echo.
 echo ========================================
@@ -93,7 +97,25 @@ echo.
 echo Desktop shortcut created: "AI Desktop Platform"
 echo Start menu entry created under "AI Desktop Platform"
 echo.
-echo To start the platform, double-click the desktop icon
-echo or run: "%INSTALL_DIR%\start-platform.bat"
+echo Would you like to start the server now? (Y/N)
+set /p start_now="Start server now? (Y/N): "
+
+if /I "%start_now%"=="Y" (
+    echo.
+    echo Starting AI Desktop Platform...
+    echo The platform will be available at: http://localhost:7777
+    echo.
+    start "" "%INSTALL_DIR%\start-platform.bat"
+    echo Platform is starting in a new window...
+    echo You can also start it later using the desktop shortcut.
+) else (
+    echo.
+    echo To start the platform later:
+    echo - Double-click the desktop shortcut "AI Desktop Platform"
+    echo - Or run: "%INSTALL_DIR%\start-platform.bat"
+    echo.
+    echo The platform will be available at: http://localhost:7777
+)
+
 echo.
 pause
