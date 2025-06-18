@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   MessageSquare, 
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProfessionalStore } from "@/stores/professionalStore";
 
 interface SidebarProps {
@@ -29,14 +31,37 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
 
   const { 
     currentModule, 
+    currentProvider,
     isProcessing,
-    moduleManager 
+    moduleManager,
+    setCurrentModule,
+    setCurrentProvider
   } = useProfessionalStore();
 
   const menuItems = [
     { id: 'chat', label: 'Chat', icon: MessageSquare },
     { id: 'agents', label: 'Agents', icon: Bot },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
+  ];
+
+  const availableProviders = moduleManager?.getAvailableProviders() || ['custom'];
+
+  const getProviderDisplayName = (providerId: string) => {
+    const providerNames = {
+      'custom': 'Custom Reasoning',
+      'openai': 'OpenAI',
+      'claude': 'Claude',
+      'ollama': 'Ollama (Local)'
+    };
+    return providerNames[providerId] || providerId;
+  };
+
+  const modules = [
+    { id: 'research', name: 'Deep Research', description: 'Advanced research with reasoning' },
+    { id: 'coding', name: 'Strategic Coding', description: 'Intelligent code generation' },
+    { id: 'decision', name: 'Decision Engine', description: 'Multi-level decision making' },
+    { id: 'analysis', name: 'Deep Analysis', description: 'Pattern recognition & insights' },
+    { id: 'memory', name: 'Memory System', description: 'Semantic memory & learning' }
   ];
 
   // Update server status based on AI system state
@@ -53,6 +78,7 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
     
     const agentNames: Record<string, string> = {
       'professional-ai': 'Professional AI',
+      'deep-research': 'Deep Research',
       'operator': 'Operator',
       'browser-automation': 'Browser Automation',
       'research': 'Research Tool',
@@ -71,6 +97,7 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
     
     const agentIcons: Record<string, any> = {
       'professional-ai': Brain,
+      'deep-research': Brain,
       'operator': Cpu,
       'browser-automation': Bot,
       'research': MessageSquare,
@@ -116,15 +143,6 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
               </Badge>
             </div>
             
-            {currentModule && (
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">Module</span>
-                <Badge variant="outline" className="border-white/20 text-gray-300 text-xs">
-                  {currentModule}
-                </Badge>
-              </div>
-            )}
-            
             {isProcessing && (
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
@@ -134,6 +152,59 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Configuration - Only show when Professional AI is active */}
+      {(selectedAgent === 'professional-ai' || selectedAgent === 'deep-research') && (
+        <div className="p-4 space-y-3">
+          <div className="text-sm text-gray-400 mb-2">AI Configuration</div>
+          
+          <Card className="bg-white/5 border-white/10">
+            <CardContent className="p-3 space-y-3">
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Reasoning Module</label>
+                <Select value={currentModule} onValueChange={setCurrentModule}>
+                  <SelectTrigger className="bg-white/5 border-white/10 text-white h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-white/10">
+                    {modules.map((module) => (
+                      <SelectItem key={module.id} value={module.id} className="text-white hover:bg-white/10">
+                        <span>{module.name}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">AI Provider</label>
+                <Select value={currentProvider} onValueChange={setCurrentProvider}>
+                  <SelectTrigger className="bg-white/5 border-white/10 text-white h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-white/10">
+                    {availableProviders.map((provider) => (
+                      <SelectItem key={provider} value={provider} className="text-white hover:bg-white/10">
+                        <div className="flex items-center space-x-2">
+                          <Zap className="w-3 h-3" />
+                          <span>{getProviderDisplayName(provider)}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-xs text-gray-400">Module</span>
+                <Badge variant="outline" className="border-white/20 text-gray-300 text-xs">
+                  {currentModule}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
