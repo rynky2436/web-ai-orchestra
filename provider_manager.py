@@ -1,5 +1,7 @@
+
 """
 AI Provider Manager - Handles multiple AI providers (OpenAI, Claude, Ollama)
+Enhanced with dynamic pre-prompt injection system
 """
 
 import asyncio
@@ -13,11 +15,12 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 class AIProviderManager:
-    """Manages multiple AI providers and routes requests intelligently"""
+    """Manages multiple AI providers and routes requests intelligently with pre-prompt injection"""
     
     def __init__(self):
         self.providers = {}
         self.default_provider = "openai"
+        self.pre_prompt_cache = {}
         self.provider_configs = {
             "openai": {
                 "api_key": os.getenv("OPENAI_API_KEY"),
@@ -40,6 +43,14 @@ class AIProviderManager:
             }
         }
         
+        # Import decision engine for component routing
+        try:
+            from decision_engine import DecisionEngine
+            self.decision_engine = DecisionEngine()
+        except ImportError:
+            logger.warning("Decision engine not available")
+            self.decision_engine = None
+    
     async def initialize(self):
         """Initialize all available AI providers"""
         try:
@@ -67,6 +78,57 @@ class AIProviderManager:
         except Exception as e:
             logger.error(f"Failed to initialize AI providers: {e}")
             return False
+    
+    async def generate_response_with_routing(
+        self, 
+        message: str, 
+        context: Dict[str, Any] = None,
+        provider: str = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Generate a response with automatic component routing and pre-prompt injection"""
+        try:
+            # Get component routing if decision engine is available
+            component_routing = None
+            pre_prompt = None
+            
+            if self.decision_engine:
+                try:
+                    component_routing = await self.decision_engine.get_component_routing(message)
+                    pre_prompt = component_routing.get('pre_prompt')
+                    logger.info(f"Routed to component: {component_routing.get('primary_component')}")
+                except Exception as e:
+                    logger.warning(f"Component routing failed: {e}")
+            
+            # Generate response with pre-prompt
+            enhanced_context = context or {}
+            if pre_prompt:
+                enhanced_context['system_prompt'] = pre_prompt
+                # Cache the pre-prompt for this session
+                self.pre_prompt_cache[message[:50]] = pre_prompt
+            
+            response = await self.generate_response(
+                message, 
+                enhanced_context, 
+                provider, 
+                **kwargs
+            )
+            
+            return {
+                'response': response,
+                'component_routing': component_routing,
+                'pre_prompt_used': bool(pre_prompt),
+                'provider_used': provider or self.default_provider,
+                'timestamp': datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in generate_response_with_routing: {e}")
+            return {
+                'response': f"I apologize, but I encountered an error: {str(e)}",
+                'error': True,
+                'timestamp': datetime.now().isoformat()
+            }
     
     async def generate_response(
         self, 
@@ -96,6 +158,15 @@ class AIProviderManager:
             logger.error(f"Error generating response: {e}")
             return f"I apologize, but I encountered an error: {str(e)}"
     
+    async def get_component_routing(self, message: str) -> Optional[Dict[str, Any]]:
+        """Get component routing information for a message"""
+        if self.decision_engine:
+            try:
+                return await self.decision_engine.get_component_routing(message)
+            except Exception as e:
+                logger.error(f"Component routing error: {e}")
+        return None
+    
     async def get_available_providers(self) -> List[str]:
         """Get list of available providers"""
         return list(self.providers.keys())
@@ -115,7 +186,7 @@ class AIProviderManager:
             return False
 
 class OpenAIProvider:
-    """OpenAI API provider"""
+    """OpenAI API provider with enhanced pre-prompt support"""
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -129,7 +200,7 @@ class OpenAIProvider:
         context: Dict[str, Any] = None,
         **kwargs
     ) -> str:
-        """Generate response using OpenAI API"""
+        """Generate response using OpenAI API with pre-prompt injection"""
         try:
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
@@ -139,17 +210,17 @@ class OpenAIProvider:
             # Build messages array
             messages = []
             
-            # Add system context if provided
+            # Add system context/pre-prompt if provided
+            system_prompt = None
             if context and context.get("system_prompt"):
-                messages.append({
-                    "role": "system",
-                    "content": context["system_prompt"]
-                })
+                system_prompt = context["system_prompt"]
             else:
-                messages.append({
-                    "role": "system",
-                    "content": "You are an advanced AI assistant with decision-making capabilities, research skills, and automation expertise. You can help with coding, research, file management, and browser automation."
-                })
+                system_prompt = "You are an advanced AI assistant with decision-making capabilities, research skills, and automation expertise. You can help with coding, research, file management, and browser automation."
+            
+            messages.append({
+                "role": "system",
+                "content": system_prompt
+            })
             
             # Add conversation history if provided
             if context and context.get("conversation_history"):
@@ -187,7 +258,7 @@ class OpenAIProvider:
             raise
 
 class AnthropicProvider:
-    """Anthropic Claude API provider"""
+    """Anthropic Claude API provider with enhanced pre-prompt support"""
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -201,7 +272,7 @@ class AnthropicProvider:
         context: Dict[str, Any] = None,
         **kwargs
     ) -> str:
-        """Generate response using Anthropic API"""
+        """Generate response using Anthropic API with pre-prompt injection"""
         try:
             headers = {
                 "x-api-key": self.api_key,
@@ -209,7 +280,7 @@ class AnthropicProvider:
                 "anthropic-version": "2023-06-01"
             }
             
-            # Build system prompt
+            # Build system prompt with pre-prompt if provided
             system_prompt = "You are an advanced AI assistant with decision-making capabilities, research skills, and automation expertise. You can help with coding, research, file management, and browser automation."
             
             if context and context.get("system_prompt"):
@@ -255,7 +326,7 @@ class AnthropicProvider:
             raise
 
 class OllamaProvider:
-    """Ollama local AI provider"""
+    """Ollama local AI provider with enhanced pre-prompt support"""
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -268,9 +339,9 @@ class OllamaProvider:
         context: Dict[str, Any] = None,
         **kwargs
     ) -> str:
-        """Generate response using Ollama API"""
+        """Generate response using Ollama API with pre-prompt injection"""
         try:
-            # Build prompt with context
+            # Build prompt with context and pre-prompt
             prompt = message
             
             if context and context.get("system_prompt"):
@@ -313,4 +384,3 @@ class OllamaProvider:
         except Exception as e:
             logger.error(f"Ollama provider error: {e}")
             raise
-
