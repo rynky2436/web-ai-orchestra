@@ -19,6 +19,16 @@ export interface RoutingResult {
   timestamp: string;
 }
 
+export interface ProviderStatus {
+  id: string;
+  name: string;
+  connected: boolean;
+  hasApiKey: boolean;
+  baseUrl?: string;
+  models?: string[];
+  error?: string;
+}
+
 export class AIRoutingService {
   private baseUrl: string;
 
@@ -56,6 +66,65 @@ export class AIRoutingService {
     } catch (error) {
       console.error('AI routing error:', error);
       return null;
+    }
+  }
+
+  /**
+   * Get available AI providers and their status
+   */
+  async getProviderStatus(): Promise<ProviderStatus[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}/providers/status`);
+      
+      if (!response.ok) {
+        throw new Error(`Provider status fetch failed: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Provider status error:', error);
+      // Return empty array if backend is not available
+      return [];
+    }
+  }
+
+  /**
+   * Get the current active provider
+   */
+  async getActiveProvider(): Promise<ProviderStatus | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}/providers/active`);
+      
+      if (!response.ok) {
+        throw new Error(`Active provider fetch failed: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Active provider error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Set the active provider
+   */
+  async setActiveProvider(providerId: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}/providers/active`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          provider_id: providerId
+        })
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Set active provider error:', error);
+      return false;
     }
   }
 

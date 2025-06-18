@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { Settings as SettingsIcon, Brain, Shield, Monitor, Database, Globe, Key, User, Bell, Palette, Code } from "lucide-react";
+import { Settings as SettingsIcon, Brain, Shield, Monitor, Database, Globe, Key, User, Bell, Palette, Code, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,11 +10,14 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/hooks/use-toast";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { ModelSelector } from "./ModelSelector";
+import { aiRoutingService, ProviderStatus } from "@/services/aiRoutingService";
 
 export const Settings = () => {
-  const { settings, currentTheme, updateSettings, setTheme } = useSettingsStore();
+  const { settings, currentTheme, aiProviders, updateSettings, setTheme, updateAIProvider } = useSettingsStore();
   
   const [apiKeys, setApiKeys] = useState({
     openai: '',
@@ -29,7 +33,7 @@ export const Settings = () => {
   });
 
   const [systemSettings, setSystemSettings] = useState({
-    aiModel: 'gpt-4',
+    aiModel: '',
     maxTokens: 4000,
     temperature: 0.7,
     autoSave: true,
@@ -56,13 +60,47 @@ export const Settings = () => {
     backupFrequency: 'daily'
   });
 
+  const [providerStatus, setProviderStatus] = useState<ProviderStatus[]>([]);
+  const [activeProvider, setActiveProvider] = useState<ProviderStatus | null>(null);
+  const [currentBackendUrl, setCurrentBackendUrl] = useState('http://localhost:8000');
+
   // Load saved settings on component mount
   useEffect(() => {
     const savedSettings = localStorage.getItem('nexus_system_settings');
     if (savedSettings) {
       setSystemSettings(JSON.parse(savedSettings));
     }
+
+    // Load API keys from localStorage
+    Object.keys(apiKeys).forEach(provider => {
+      const savedKey = localStorage.getItem(`nexus_api_${provider}`);
+      if (savedKey) {
+        setApiKeys(prev => ({ ...prev, [provider]: savedKey }));
+      }
+    });
+
+    // Load provider status
+    loadProviderStatus();
   }, []);
+
+  const loadProviderStatus = async () => {
+    try {
+      const [providers, active] = await Promise.all([
+        aiRoutingService.getProviderStatus(),
+        aiRoutingService.getActiveProvider()
+      ]);
+      
+      setProviderStatus(providers);
+      setActiveProvider(active);
+      
+      // Set the model from active provider if available
+      if (active && active.models && active.models.length > 0 && !systemSettings.aiModel) {
+        setSystemSettings(prev => ({ ...prev, aiModel: active.models![0] }));
+      }
+    } catch (error) {
+      console.error('Failed to load provider status:', error);
+    }
+  };
 
   const handleApiKeyChange = (provider: string, value: string) => {
     setApiKeys(prev => ({ ...prev, [provider]: value }));
@@ -90,25 +128,34 @@ export const Settings = () => {
     // Save to secure storage (would be backend in real implementation)
     localStorage.setItem(`nexus_api_${provider}`, key);
     
+    // Update the AI provider in the store
+    updateAIProvider(provider, { apiKey: key, enabled: true });
+    
     toast({
       title: "API Key Saved",
       description: `${provider} API key has been securely stored`
     });
+    
+    // Reload provider status
+    loadProviderStatus();
   };
 
-  const testApiConnection = (provider: string) => {
+  const testApiConnection = async (provider: string) => {
     if (provider === 'ollama') {
       toast({
-        title: "Connection Test Not Available",
-        description: "Ollama connection testing requires backend integration"
+        title: "Testing Ollama Connection",
+        description: "Checking if Ollama is running locally..."
       });
       return;
     }
 
     toast({
-      title: "Connection Test Not Available", 
-      description: "API connection testing requires backend integration"
+      title: "Testing Connection",
+      description: `Testing connection to ${provider}...`
     });
+    
+    // Reload provider status to get fresh connection info
+    await loadProviderStatus();
   };
 
   const handleSystemSettingChange = (setting: string, value: any) => {
@@ -124,6 +171,10 @@ export const Settings = () => {
       title: "Setting Updated",
       description: `${setting} has been updated`
     });
+  };
+
+  const handleModelChange = (model: string) => {
+    handleSystemSettingChange('aiModel', model);
   };
 
   const handleThemeChange = (theme: any) => {
@@ -295,22 +346,39 @@ export const Settings = () => {
               <CardHeader>
                 <CardTitle className="text-white">AI Model Configuration</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-white text-sm">Primary AI Model</Label>
-                  <Select value={systemSettings.aiModel} onValueChange={(value) => handleSystemSettingChange('aiModel', value)}>
-                    <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10">
-                      <SelectItem value="gpt-4">GPT-4 (OpenAI)</SelectItem>
-                      <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo (OpenAI)</SelectItem>
-                      <SelectItem value="claude-3">Claude 3 (Anthropic)</SelectItem>
-                      <SelectItem value="gemini-pro">Gemini Pro (Google)</SelectItem>
-                      <SelectItem value="ollama">Ollama (Local)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <CardContent className="space-y-6">
+                {!activeProvider?.connected && (
+                  <Alert className="border-red-500/30 bg-red-500/10">
+                    <AlertCircle className="h-4 w-4 text-red-400" />
+                    <AlertDescription className="text-red-300">
+                      No AI provider is currently connected. Please configure an API key in the API Keys tab first.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {activeProvider && (
+                  <div className="p-4 bg-blue-500/20 border border-blue-500/30 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-blue-400 font-medium">Active Provider</h4>
+                        <p className="text-blue-300 text-sm">{activeProvider.name}</p>
+                      </div>
+                      <Badge className={activeProvider.connected ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}>
+                        {activeProvider.connected ? "Connected" : "Disconnected"}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+
+                <ModelSelector
+                  backendUrl={activeProvider?.baseUrl || currentBackendUrl}
+                  apiKey={activeProvider?.hasApiKey ? apiKeys[activeProvider.id as keyof typeof apiKeys] : undefined}
+                  currentModel={systemSettings.aiModel}
+                  onModelChange={handleModelChange}
+                  className="space-y-2"
+                  textColor="text-white"
+                  inputClasses="bg-white/5 border-white/10 text-white"
+                />
 
                 <div>
                   <Label className="text-white text-sm">Max Tokens: {systemSettings.maxTokens}</Label>
@@ -321,6 +389,7 @@ export const Settings = () => {
                     value={systemSettings.maxTokens}
                     onChange={(e) => handleSystemSettingChange('maxTokens', parseInt(e.target.value))}
                     className="w-full mt-2"
+                    disabled={!activeProvider?.connected}
                   />
                 </div>
 
@@ -334,6 +403,7 @@ export const Settings = () => {
                     value={systemSettings.temperature}
                     onChange={(e) => handleSystemSettingChange('temperature', parseFloat(e.target.value))}
                     className="w-full mt-2"
+                    disabled={!activeProvider?.connected}
                   />
                 </div>
               </CardContent>
