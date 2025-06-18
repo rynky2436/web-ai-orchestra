@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   MessageSquare, 
@@ -29,10 +28,8 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
   const [serverStatus, setServerStatus] = useState<'connected' | 'disconnected' | 'loading'>('connected');
 
   const { 
-    currentProvider, 
     currentModule, 
     isProcessing,
-    aiProvider,
     moduleManager 
   } = useProfessionalStore();
 
@@ -44,12 +41,12 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
 
   // Update server status based on AI system state
   useEffect(() => {
-    if (aiProvider && moduleManager) {
+    if (moduleManager) {
       setServerStatus('connected');
     } else {
       setServerStatus('disconnected');
     }
-  }, [aiProvider, moduleManager]);
+  }, [moduleManager]);
 
   const getAgentDisplayName = (agent: string | null) => {
     if (!agent) return null;
@@ -118,15 +115,6 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
                 {serverStatus}
               </Badge>
             </div>
-            
-            {currentProvider && (
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">Provider</span>
-                <Badge variant="outline" className="border-white/20 text-gray-300 text-xs">
-                  {currentProvider}
-                </Badge>
-              </div>
-            )}
             
             {currentModule && (
               <div className="flex items-center justify-between">

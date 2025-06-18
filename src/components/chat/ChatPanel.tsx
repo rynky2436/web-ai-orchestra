@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Send, Mic, MicOff, Volume2, VolumeX, Bot, Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,10 +39,8 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
-    currentProvider,
     currentModule,
     isProcessing,
-    setCurrentProvider,
     setCurrentModule,
     processRequest,
     initializePlatform
@@ -153,7 +150,6 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
         content: responseContent,
         role: 'assistant',
         timestamp: new Date(),
-        provider: currentProvider,
         module: currentModule
       };
 
@@ -166,7 +162,7 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
 
       toast({
         title: "Request Processed",
-        description: `Completed using ${currentProvider} with ${currentModule} module`
+        description: `Completed using ${currentModule} module`
       });
 
     } catch (error) {
@@ -263,18 +259,6 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Select value={currentProvider} onValueChange={setCurrentProvider}>
-              <SelectTrigger className="w-32 bg-white/5 border-white/10 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-white/10">
-                <SelectItem value="openai">OpenAI</SelectItem>
-                <SelectItem value="claude">Claude</SelectItem>
-                <SelectItem value="grok">Grok</SelectItem>
-                <SelectItem value="ollama">Ollama</SelectItem>
-              </SelectContent>
-            </Select>
-
             <Select value={currentModule} onValueChange={setCurrentModule}>
               <SelectTrigger className="w-32 bg-white/5 border-white/10 text-white">
                 <SelectValue />
@@ -282,9 +266,8 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
               <SelectContent className="bg-slate-900 border-white/10">
                 <SelectItem value="research">Research</SelectItem>
                 <SelectItem value="coding">Coding</SelectItem>
-                <SelectItem value="voice">Voice</SelectItem>
-                <SelectItem value="browser">Browser</SelectItem>
-                <SelectItem value="files">Files</SelectItem>
+                <SelectItem value="decision">Decision</SelectItem>
+                <SelectItem value="analysis">Analysis</SelectItem>
                 <SelectItem value="memory">Memory</SelectItem>
               </SelectContent>
             </Select>
@@ -339,15 +322,10 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
                       <p className="text-xs text-gray-400">
                         {message.timestamp.toLocaleTimeString()}
                       </p>
-                      {message.provider && message.module && (
-                        <div className="flex space-x-1">
-                          <Badge variant="outline" className="text-xs border-white/20 text-gray-400">
-                            {message.provider}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs border-white/20 text-gray-400">
-                            {message.module}
-                          </Badge>
-                        </div>
+                      {message.module && (
+                        <Badge variant="outline" className="text-xs border-white/20 text-gray-400">
+                          {message.module}
+                        </Badge>
                       )}
                     </div>
                   </div>

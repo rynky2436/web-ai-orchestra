@@ -27,7 +27,7 @@ export const ProfessionalAI = () => {
   const [showConfig, setShowConfig] = useState(false);
   const [configForm, setConfigForm] = useState({
     host: config.host || '0.0.0.0',
-    port: config.port || 7777,
+    port: config.port.toString() || '7777',
     memory_data_dir: config.memory_data_dir || 'data/memory'
   });
 
@@ -68,7 +68,7 @@ export const ProfessionalAI = () => {
   const handleConfigSave = () => {
     updateConfig({
       host: configForm.host,
-      port: parseInt(configForm.port.toString()),
+      port: parseInt(configForm.port),
       memory_data_dir: configForm.memory_data_dir
     });
 

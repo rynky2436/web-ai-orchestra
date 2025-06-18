@@ -247,7 +247,7 @@ export const AgentLauncher = ({ onSelectAgent, onViewChange }: AgentLauncherProp
     systemControl: false
   });
 
-  const { setCurrentProvider, setCurrentModule, initializePlatform } = useProfessionalStore();
+  const { setCurrentModule, initializePlatform } = useProfessionalStore();
 
   const handleLaunchModule = (moduleId: string) => {
     if (moduleId === 'deep-research') {
@@ -301,7 +301,6 @@ export const AgentLauncher = ({ onSelectAgent, onViewChange }: AgentLauncherProp
   };
 
   const handleQuickStart = () => {
-    setCurrentProvider('openai');
     setCurrentModule('research');
     initializePlatform();
     onSelectAgent('deep-research');
