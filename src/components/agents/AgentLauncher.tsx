@@ -83,21 +83,21 @@ const coreModules = [
     status: 'ready'
   },
   {
-    id: 'workflow-automation',
-    name: 'Workflow Automation',
-    description: 'Create and execute complex automation workflows',
-    icon: Workflow,
-    color: 'from-purple-500 to-indigo-500',
-    permissions: ['Multi-App Control', 'Task Scheduling', 'Event Triggers'],
-    status: 'ready'
-  },
-  {
-    id: 'ai-social-manager',
-    name: 'AI Social Manager',
-    description: 'Manage social media, content creation, and engagement',
+    id: 'social-media-manager',
+    name: 'Social Media Manager',
+    description: 'AI-powered social media management and content creation',
     icon: MessageSquare,
     color: 'from-pink-500 to-rose-500',
     permissions: ['Social API Access', 'Content Generation', 'Analytics'],
+    status: 'ready'
+  },
+  {
+    id: 'smart-home-controller',
+    name: 'Smart Home Controller',
+    description: 'Advanced Home Assistant integration with AI automation',
+    icon: Monitor,
+    color: 'from-blue-500 to-indigo-500',
+    permissions: ['Home Assistant API', 'Device Control', 'Automation'],
     status: 'ready'
   }
 ];
@@ -209,6 +209,14 @@ const tools = [
     icon: Zap,
     color: 'from-yellow-500 to-orange-500',
     category: 'ai'
+  },
+  {
+    id: 'browser-automation',
+    name: 'Browser Automation',
+    description: 'Automated web scraping and browser control',
+    icon: Chrome,
+    color: 'from-blue-500 to-cyan-500',
+    category: 'automation'
   }
 ];
 

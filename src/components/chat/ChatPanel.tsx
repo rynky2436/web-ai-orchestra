@@ -52,15 +52,15 @@ export const ChatPanel = ({ selectedAgent }: ChatPanelProps) => {
   useEffect(() => {
     initializePlatform();
     
-    // Initialize speech recognition
+    // Initialize speech recognition with proper typing
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-      const recognitionInstance = new SpeechRecognition();
+      const SpeechRecognitionConstructor = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      const recognitionInstance = new SpeechRecognitionConstructor();
       recognitionInstance.continuous = false;
       recognitionInstance.interimResults = false;
       recognitionInstance.lang = 'en-US';
       
-      recognitionInstance.onresult = (event) => {
+      recognitionInstance.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         setInputValue(transcript);
         setIsListening(false);

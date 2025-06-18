@@ -1,9 +1,10 @@
-
 import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { AgentLauncher } from "@/components/agents/AgentLauncher";
 import { CodeCreatorAgent } from "@/components/agents/CodeCreatorAgent";
+import { AISocialManager } from "@/components/agents/AISocialManager";
+import { SmartHomeController } from "@/components/agents/SmartHomeController";
 import { Settings } from "@/components/settings/Settings";
 import { ResearchTool } from "@/components/tools/ResearchTool";
 import { CodeSandbox } from "@/components/tools/CodeSandbox";
@@ -20,8 +21,19 @@ const Index = () => {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 
   const renderMainContent = () => {
-    // Handle new professional AI module
-    if (selectedAgent === 'professional-ai') {
+    // Handle new agent modules
+    if (selectedAgent === 'social-media-manager') {
+      return <AISocialManager />;
+    }
+    if (selectedAgent === 'smart-home-controller') {
+      return <SmartHomeController />;
+    }
+    if (selectedAgent === 'code-creator') {
+      return <CodeCreatorAgent />;
+    }
+    
+    // Handle renamed deep research (was professional-ai)
+    if (selectedAgent === 'deep-research' || selectedAgent === 'professional-ai') {
       return <ProfessionalAI />;
     }
     
