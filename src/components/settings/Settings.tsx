@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { OperatorPermissions } from "./OperatorPermissions";
 
 export const Settings = () => {
   const [config, setConfig] = useState({
@@ -41,6 +42,9 @@ export const Settings = () => {
       </div>
 
       <div className="p-6 space-y-8 max-w-4xl">
+        {/* AI Operator Permissions - New Section */}
+        <OperatorPermissions />
+
         {/* API Keys */}
         <Card className="bg-white/5 border-white/10">
           <CardHeader>

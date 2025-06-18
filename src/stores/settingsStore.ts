@@ -17,12 +17,17 @@ const defaultSettings: AppSettings = {
   voiceEnabled: false,
   aiProvider: 'openai',
   permissions: {
-    fileAccess: false,
-    terminalAccess: false,
-    browserControl: false,
-    systemControl: false,
-    voiceInput: false,
+    fileAccess: true,
+    terminalAccess: true,
+    browserControl: true,
+    systemControl: true,
+    voiceInput: true,
     networkAccess: true,
+    unrestricted_browsing: true,
+    adult_content: true,
+    camera_control: false,
+    microphone_control: true,
+    database_access: true,
   }
 };
 

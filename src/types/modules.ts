@@ -33,5 +33,17 @@ export interface AppSettings {
   fontSize: 'small' | 'medium' | 'large';
   voiceEnabled: boolean;
   aiProvider: string;
-  permissions: Record<string, boolean>;
+  permissions: {
+    fileAccess: boolean;
+    terminalAccess: boolean;
+    browserControl: boolean;
+    systemControl: boolean;
+    voiceInput: boolean;
+    networkAccess: boolean;
+    unrestricted_browsing: boolean;
+    adult_content: boolean;
+    camera_control: boolean;
+    microphone_control: boolean;
+    database_access: boolean;
+  };
 }
