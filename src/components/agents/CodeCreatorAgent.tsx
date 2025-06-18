@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Code, 
@@ -23,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { AIChat } from "@/components/shared/AIChat";
 
 export const CodeCreatorAgent = () => {
   const [projectType, setProjectType] = useState('website');
@@ -291,8 +291,14 @@ export default ${projectName?.replace(/\s+/g, '') || 'MyComponent'};
     });
   };
 
+  const handleAIMessage = (message: string) => {
+    console.log('Code Creator AI received:', message);
+    // Handle AI code creation requests
+  };
+
   return (
-    <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 overflow-y-auto">
+    <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 flex flex-col">
+      {/* Header */}
       <div className="border-b border-white/10 p-4 bg-black/20 backdrop-blur-lg">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-gradient-to-r from-violet-500 to-purple-500 rounded-lg flex items-center justify-center">
@@ -305,152 +311,166 @@ export default ${projectName?.replace(/\s+/g, '') || 'MyComponent'};
         </div>
       </div>
 
-      <div className="p-6">
-        <Tabs defaultValue="create" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-white/5 border-white/10">
-            <TabsTrigger value="create" className="text-white data-[state=active]:bg-purple-500/20">Create</TabsTrigger>
-            <TabsTrigger value="templates" className="text-white data-[state=active]:bg-purple-500/20">Templates</TabsTrigger>
-            <TabsTrigger value="examples" className="text-white data-[state=active]:bg-purple-500/20">Examples</TabsTrigger>
-          </TabsList>
+      <div className="flex-1 flex">
+        {/* Main Content Area */}
+        <div className="flex-1 p-6 overflow-y-auto">
+          <Tabs defaultValue="create" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 bg-white/5 border-white/10">
+              <TabsTrigger value="create" className="text-white data-[state=active]:bg-purple-500/20">Create</TabsTrigger>
+              <TabsTrigger value="templates" className="text-white data-[state=active]:bg-purple-500/20">Templates</TabsTrigger>
+              <TabsTrigger value="examples" className="text-white data-[state=active]:bg-purple-500/20">Examples</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="create" className="mt-6 space-y-6">
-            <Card className="bg-white/5 border-white/10">
-              <CardHeader>
-                <CardTitle className="text-white">Project Configuration</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-white text-sm font-medium mb-2 block">Project Type</label>
-                  <Select value={projectType} onValueChange={setProjectType}>
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10">
-                      {projectTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id}>
-                          <div className="flex items-center space-x-2">
-                            <type.icon className="w-4 h-4" />
-                            <span>{type.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-white text-sm font-medium mb-2 block">Project Name</label>
-                  <Input
-                    value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
-                    placeholder="My Awesome Project"
-                    className="bg-white/5 border-white/10 text-white placeholder-gray-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-white text-sm font-medium mb-2 block">Description</label>
-                  <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe what you want me to create. Be as detailed as possible..."
-                    className="bg-white/5 border-white/10 text-white placeholder-gray-400 min-h-24"
-                  />
-                </div>
-
-                <Button
-                  onClick={generateCode}
-                  disabled={isGenerating}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-                >
-                  <Zap className="w-4 h-4 mr-2" />
-                  {isGenerating ? 'Generating Code...' : 'Generate Code'}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {generatedCode && (
+            <TabsContent value="create" className="mt-6 space-y-6">
               <Card className="bg-white/5 border-white/10">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-white">Generated Code</CardTitle>
-                    <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        onClick={copyToClipboard}
-                        className="bg-blue-500 hover:bg-blue-600 text-white"
-                      >
-                        <Copy className="w-4 h-4 mr-2" />
-                        Copy
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={downloadCode}
-                        className="bg-green-500 hover:bg-green-600 text-white"
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </Button>
-                    </div>
-                  </div>
+                  <CardTitle className="text-white">Project Configuration</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <pre className="bg-black/50 p-4 rounded-lg overflow-x-auto text-sm text-gray-300 max-h-96">
-                    <code>{generatedCode}</code>
-                  </pre>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="text-white text-sm font-medium mb-2 block">Project Type</label>
+                    <Select value={projectType} onValueChange={setProjectType}>
+                      <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-900 border-white/10">
+                        {projectTypes.map((type) => (
+                          <SelectItem key={type.id} value={type.id}>
+                            <div className="flex items-center space-x-2">
+                              <type.icon className="w-4 h-4" />
+                              <span>{type.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-white text-sm font-medium mb-2 block">Project Name</label>
+                    <Input
+                      value={projectName}
+                      onChange={(e) => setProjectName(e.target.value)}
+                      placeholder="My Awesome Project"
+                      className="bg-white/5 border-white/10 text-white placeholder-gray-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-white text-sm font-medium mb-2 block">Description</label>
+                    <Textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Describe what you want me to create. Be as detailed as possible..."
+                      className="bg-white/5 border-white/10 text-white placeholder-gray-400 min-h-24"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={generateCode}
+                    disabled={isGenerating}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                  >
+                    <Zap className="w-4 h-4 mr-2" />
+                    {isGenerating ? 'Generating Code...' : 'Generate Code'}
+                  </Button>
                 </CardContent>
               </Card>
-            )}
-          </TabsContent>
 
-          <TabsContent value="templates" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {projectTypes.map((type) => (
-                <Card key={type.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer">
+              {generatedCode && (
+                <Card className="bg-white/5 border-white/10">
                   <CardHeader>
-                    <div className="flex items-center space-x-3">
-                      <type.icon className="w-6 h-6 text-purple-400" />
-                      <CardTitle className="text-white text-lg">{type.name}</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-white">Generated Code</CardTitle>
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          onClick={copyToClipboard}
+                          className="bg-blue-500 hover:bg-blue-600 text-white"
+                        >
+                          <Copy className="w-4 h-4 mr-2" />
+                          Copy
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={downloadCode}
+                          className="bg-green-500 hover:bg-green-600 text-white"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-400 text-sm">{type.description}</p>
-                    <Button 
-                      className="w-full mt-3 bg-purple-500 hover:bg-purple-600 text-white"
-                      onClick={() => setProjectType(type.id)}
-                    >
-                      Use Template
-                    </Button>
+                    <pre className="bg-black/50 p-4 rounded-lg overflow-x-auto text-sm text-gray-300 max-h-96">
+                      <code>{generatedCode}</code>
+                    </pre>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          </TabsContent>
+              )}
+            </TabsContent>
 
-          <TabsContent value="examples" className="mt-6">
-            <div className="space-y-4">
-              <Card className="bg-white/5 border-white/10">
-                <CardHeader>
-                  <CardTitle className="text-white">Example Projects</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="p-3 bg-black/30 rounded-lg">
-                    <h4 className="text-white font-medium">Portfolio Website</h4>
-                    <p className="text-gray-400 text-sm">A modern portfolio with animations and dark theme</p>
-                  </div>
-                  <div className="p-3 bg-black/30 rounded-lg">
-                    <h4 className="text-white font-medium">Chrome Extension</h4>
-                    <p className="text-gray-400 text-sm">Productivity plugin with tab management features</p>
-                  </div>
-                  <div className="p-3 bg-black/30 rounded-lg">
-                    <h4 className="text-white font-medium">Dashboard Theme</h4>
-                    <p className="text-gray-400 text-sm">Admin dashboard with glassmorphism design</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="templates" className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {projectTypes.map((type) => (
+                  <Card key={type.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer">
+                    <CardHeader>
+                      <div className="flex items-center space-x-3">
+                        <type.icon className="w-6 h-6 text-purple-400" />
+                        <CardTitle className="text-white text-lg">{type.name}</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-400 text-sm">{type.description}</p>
+                      <Button 
+                        className="w-full mt-3 bg-purple-500 hover:bg-purple-600 text-white"
+                        onClick={() => setProjectType(type.id)}
+                      >
+                        Use Template
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="examples" className="mt-6">
+              <div className="space-y-4">
+                <Card className="bg-white/5 border-white/10">
+                  <CardHeader>
+                    <CardTitle className="text-white">Example Projects</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="p-3 bg-black/30 rounded-lg">
+                      <h4 className="text-white font-medium">Portfolio Website</h4>
+                      <p className="text-gray-400 text-sm">A modern portfolio with animations and dark theme</p>
+                    </div>
+                    <div className="p-3 bg-black/30 rounded-lg">
+                      <h4 className="text-white font-medium">Chrome Extension</h4>
+                      <p className="text-gray-400 text-sm">Productivity plugin with tab management features</p>
+                    </div>
+                    <div className="p-3 bg-black/30 rounded-lg">
+                      <h4 className="text-white font-medium">Dashboard Theme</h4>
+                      <p className="text-gray-400 text-sm">Admin dashboard with glassmorphism design</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Standardized AI Chat Interface */}
+        <div className="w-96 border-l border-white/10">
+          <AIChat
+            title="Code Creation AI"
+            placeholder="Describe what you want to build, ask for help with code..."
+            initialMessage="Hello! I'm your AI code creator. I can help you build websites, plugins, themes, components, and full applications. Just describe what you want to create and I'll generate the code for you. What shall we build today?"
+            onSendMessage={handleAIMessage}
+            className="h-full"
+          />
+        </div>
       </div>
     </div>
   );

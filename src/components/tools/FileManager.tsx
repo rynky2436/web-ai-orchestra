@@ -1,358 +1,386 @@
-
 import { useState } from "react";
 import { 
   FolderOpen, 
-  File, 
-  Download, 
-  Upload, 
-  Edit, 
+  ImageIcon, 
+  Video, 
+  Music, 
+  FileText,
   Trash2, 
-  Plus,
+  Copy,
   Search,
   Filter,
+  ScanLine,
+  AlertCircle,
+  CheckCircle,
+  BarChart3,
   RefreshCw,
-  Send,
-  MessageSquare,
-  Brain
+  Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/hooks/use-toast";
+import { AIChat } from "@/components/shared/AIChat";
 
 export const FileManager = () => {
-  const [currentPath, setCurrentPath] = useState('/home/user/projects');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
-  const [chatInput, setChatInput] = useState('');
-  const [editingFile, setEditingFile] = useState<string | null>(null);
-  const [fileContent, setFileContent] = useState('');
-  const [aiRequest, setAiRequest] = useState('');
-  const [chatMessages, setChatMessages] = useState<Array<{role: string, content: string}>>([
-    { role: 'assistant', content: 'Hello! I\'m your file management assistant. I can help you organize, edit, and manage your files.' }
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [duplicates, setDuplicates] = useState([
+    {
+      id: '1',
+      name: 'IMG_0123.jpg',
+      size: '2.4 MB',
+      path: '/Users/photos/vacation/',
+      duplicateCount: 3,
+      type: 'image',
+      similarity: 100
+    },
+    {
+      id: '2',
+      name: 'video_call_recording.mp4',
+      size: '45.2 MB',
+      path: '/Users/downloads/',
+      duplicateCount: 2,
+      type: 'video',
+      similarity: 98
+    }
   ]);
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
 
-  const files = [
-    { name: 'nexusai-backend', type: 'folder', size: '—', modified: '2 hours ago' },
-    { name: 'nexusai-frontend', type: 'folder', size: '—', modified: '1 hour ago' },
-    { name: 'config.json', type: 'file', size: '2.4 KB', modified: '30 min ago' },
-    { name: 'requirements.txt', type: 'file', size: '1.2 KB', modified: '1 hour ago' },
-    { name: 'README.md', type: 'file', size: '4.8 KB', modified: '2 hours ago' },
-    { name: 'main.py', type: 'file', size: '12.3 KB', modified: '45 min ago' },
-    { name: 'package.json', type: 'file', size: '3.1 KB', modified: '1 hour ago' },
-  ];
+  const startScan = async () => {
+    setIsScanning(true);
+    setScanProgress(0);
+    
+    // Simulate AI scanning process
+    const interval = setInterval(() => {
+      setScanProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsScanning(false);
+          toast({
+            title: "Scan Complete",
+            description: "Found 15 duplicate files and 3 similar media groups"
+          });
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 500);
+  };
 
-  const toggleFileSelection = (fileName: string) => {
+  const organizeByAI = () => {
+    toast({
+      title: "AI Organization Started",
+      description: "Files are being organized by date, type, and content similarity"
+    });
+  };
+
+  const removeDuplicates = () => {
+    if (selectedFiles.length === 0) {
+      toast({
+        title: "No Files Selected",
+        description: "Please select duplicates to remove",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    toast({
+      title: "Duplicates Removed",
+      description: `Successfully removed ${selectedFiles.length} duplicate files`
+    });
+    setSelectedFiles([]);
+  };
+
+  const toggleFileSelection = (fileId: string) => {
     setSelectedFiles(prev => 
-      prev.includes(fileName) 
-        ? prev.filter(f => f !== fileName)
-        : [...prev, fileName]
+      prev.includes(fileId) 
+        ? prev.filter(id => id !== fileId)
+        : [...prev, fileId]
     );
   };
 
-  const handleEditFile = (fileName: string) => {
-    setEditingFile(fileName);
-    // Simulate loading file content
-    setFileContent(`// Content of ${fileName}
-// This is a simulated file editor
-// You can modify the content here
-
-console.log('Editing ${fileName}');
-`);
+  const getFileIcon = (type: string) => {
+    switch (type) {
+      case 'image': return ImageIcon;
+      case 'video': return Video;
+      case 'audio': return Music;
+      default: return FileText;
+    }
   };
 
-  const handleSaveFile = () => {
-    setChatMessages(prev => [
-      ...prev,
-      { role: 'assistant', content: `File "${editingFile}" has been saved successfully!` }
-    ]);
-    setEditingFile(null);
-    setFileContent('');
-  };
-
-  const handleChatSubmit = () => {
-    if (!chatInput.trim()) return;
-    
-    setChatMessages(prev => [
-      ...prev,
-      { role: 'user', content: chatInput },
-      { role: 'assistant', content: `I'll help you with "${chatInput}". What specific file operation would you like me to perform?` }
-    ]);
-    setChatInput('');
-  };
-
-  const handleAiFileOperation = () => {
-    if (!aiRequest.trim()) return;
-    
-    setChatMessages(prev => [
-      ...prev,
-      { role: 'assistant', content: `I'll help you with "${aiRequest}". Let me process this file operation.` }
-    ]);
-    setAiRequest('');
+  const handleAIMessage = (message: string) => {
+    console.log('File Manager AI received:', message);
+    // Handle AI file management requests
   };
 
   return (
     <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 flex flex-col">
-      {/* Prominent Header with Communication */}
-      <div className="border-b border-white/10 p-6 bg-black/20 backdrop-blur-lg">
-        <div className="flex items-center justify-between mb-6">
+      {/* Header */}
+      <div className="border-b border-white/10 p-4 bg-black/20 backdrop-blur-lg">
+        <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-teal-500 to-green-500 rounded-lg flex items-center justify-center">
-              <FolderOpen className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-green-500 rounded-lg flex items-center justify-center">
+              <FolderOpen className="w-4 h-4 text-white" />
             </div>
-            <div>
-              <h2 className="text-2xl font-bold text-white">AI File Manager</h2>
-              <p className="text-gray-400 text-sm">Organize and manage files with AI assistance</p>
-            </div>
+            <h2 className="text-xl font-semibold text-white">AI File Manager</h2>
+            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+              Intelligent Organization
+            </Badge>
           </div>
           
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
-              <Plus className="w-4 h-4 mr-1" />
-              New
-            </Button>
-            <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
-              <Upload className="w-4 h-4 mr-1" />
-              Upload
-            </Button>
-            <Button variant="outline" size="sm" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
-              <RefreshCw className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-
-        {/* PRIMARY AI COMMUNICATION INTERFACE */}
-        <div className="bg-gradient-to-r from-teal-500/20 to-green-500/20 p-4 rounded-lg border border-teal-500/30 mb-4">
-          <div className="flex items-center space-x-2 mb-3">
-            <Brain className="w-5 h-5 text-teal-400" />
-            <h3 className="text-white font-semibold">AI File Assistant - Tell me what to do with files</h3>
-          </div>
-          <div className="flex space-x-3">
-            <Input
-              value={aiRequest}
-              onChange={(e) => setAiRequest(e.target.value)}
-              placeholder="Ask me to organize files, find duplicates, create folders, analyze content... (e.g., 'organize images by date', 'find all Python files')"
-              className="flex-1 bg-white/10 border-white/20 text-white placeholder-gray-300 h-12 text-base"
-              onKeyPress={(e) => e.key === 'Enter' && handleAiFileOperation()}
-            />
-            <Button 
-              onClick={handleAiFileOperation}
-              disabled={!aiRequest.trim()}
-              className="bg-teal-500 hover:bg-teal-600 text-white px-6 h-12"
+            <Button
+              onClick={startScan}
+              disabled={isScanning}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
             >
-              <Brain className="w-4 h-4 mr-2" />
-              Execute
+              <ScanLine className="w-4 h-4 mr-2" />
+              {isScanning ? 'Scanning...' : 'AI Scan'}
+            </Button>
+            <Button
+              onClick={organizeByAI}
+              className="bg-purple-500 hover:bg-purple-600 text-white"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              AI Organize
             </Button>
           </div>
         </div>
 
-        {/* Path and Search */}
-        <div className="flex items-center space-x-4">
-          <div className="flex-1">
-            <div className="text-sm text-gray-400 mb-1">Current Path:</div>
-            <div className="text-white font-mono bg-white/5 px-3 py-1 rounded border border-white/10">
-              {currentPath}
+        {isScanning && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-white">AI Scanning Progress</span>
+              <span className="text-sm text-gray-400">{scanProgress}%</span>
             </div>
+            <Progress value={scanProgress} className="h-2" />
           </div>
-          <div className="w-64">
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search files..."
-              className="bg-white/5 border-white/10 text-white placeholder-gray-400"
-            />
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 flex">
-        {/* File List */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            {/* Action Bar */}
-            {selectedFiles.length > 0 && (
-              <div className="mb-4 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-blue-400 text-sm">
-                    {selectedFiles.length} file(s) selected
-                  </span>
-                  <div className="flex items-center space-x-2">
-                    <Button size="sm" variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
-                      <Download className="w-4 h-4 mr-1" />
-                      Download
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="bg-white/5 border-white/10 text-white hover:bg-white/10"
-                      onClick={() => selectedFiles[0] && handleEditFile(selectedFiles[0])}
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button size="sm" variant="outline" className="bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30">
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
-                    </Button>
+        {/* Main Content Area */}
+        <div className="flex-1 p-6 overflow-y-auto">
+          <Tabs defaultValue="duplicates" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 bg-white/5 border-white/10">
+              <TabsTrigger value="duplicates" className="text-white data-[state=active]:bg-blue-500/20">Duplicates</TabsTrigger>
+              <TabsTrigger value="similar" className="text-white data-[state=active]:bg-blue-500/20">Similar Media</TabsTrigger>
+              <TabsTrigger value="organize" className="text-white data-[state=active]:bg-blue-500/20">Smart Organize</TabsTrigger>
+              <TabsTrigger value="analytics" className="text-white data-[state=active]:bg-blue-500/20">Analytics</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="duplicates" className="mt-6 space-y-4">
+              {selectedFiles.length > 0 && (
+                <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-red-400 text-sm">
+                      {selectedFiles.length} duplicate(s) selected for removal
+                    </span>
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        onClick={removeDuplicates}
+                        className="bg-red-500 hover:bg-red-600 text-white"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Remove Selected
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedFiles([])}
+                        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                      >
+                        Clear Selection
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Files Grid */}
-            <div className="grid grid-cols-1 gap-2">
-              {files.map((file) => (
-                <Card 
-                  key={file.name}
-                  className={`cursor-pointer transition-all duration-200 ${
-                    selectedFiles.includes(file.name)
-                      ? 'bg-blue-500/20 border-blue-500/30'
-                      : 'bg-white/5 border-white/10 hover:bg-white/10'
-                  }`}
-                  onClick={() => toggleFileSelection(file.name)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        {file.type === 'folder' ? (
-                          <FolderOpen className="w-5 h-5 text-blue-400" />
-                        ) : (
-                          <File className="w-5 h-5 text-gray-400" />
-                        )}
-                        <div>
-                          <div className="text-white font-medium">{file.name}</div>
-                          <div className="text-xs text-gray-400">
-                            {file.size} • Modified {file.modified}
+              <div className="grid gap-4">
+                {duplicates.map((file) => {
+                  const IconComponent = getFileIcon(file.type);
+                  return (
+                    <Card 
+                      key={file.id}
+                      className={`cursor-pointer transition-all duration-200 ${
+                        selectedFiles.includes(file.id)
+                          ? 'bg-red-500/20 border-red-500/30'
+                          : 'bg-white/5 border-white/10 hover:bg-white/10'
+                      }`}
+                      onClick={() => toggleFileSelection(file.id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <IconComponent className="w-8 h-8 text-blue-400" />
+                            <div>
+                              <h3 className="text-white font-medium">{file.name}</h3>
+                              <p className="text-sm text-gray-400">{file.path}</p>
+                              <p className="text-xs text-gray-500">{file.size}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center space-x-4">
+                            <div className="text-center">
+                              <div className="text-orange-400 font-bold">{file.duplicateCount}</div>
+                              <div className="text-xs text-gray-400">duplicates</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-green-400 font-bold">{file.similarity}%</div>
+                              <div className="text-xs text-gray-400">similarity</div>
+                            </div>
+                            <Badge 
+                              variant="outline" 
+                              className={`capitalize ${
+                                file.type === 'image' ? 'border-blue-500/30 text-blue-400' :
+                                file.type === 'video' ? 'border-purple-500/30 text-purple-400' :
+                                'border-green-500/30 text-green-400'
+                              }`}
+                            >
+                              {file.type}
+                            </Badge>
                           </div>
                         </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="similar" className="mt-6">
+              <Card className="bg-white/5 border-white/10">
+                <CardHeader>
+                  <CardTitle className="text-white">Similar Media Groups</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-400 mb-4">AI has identified visually similar images and videos that you might want to organize or merge.</p>
+                  <Button className="bg-purple-500 hover:bg-purple-600 text-white">
+                    <Search className="w-4 h-4 mr-2" />
+                    Find Similar Content
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="organize" className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="bg-white/5 border-white/10">
+                  <CardHeader>
+                    <CardTitle className="text-white">Smart Organization</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white">
+                      <FolderOpen className="w-4 h-4 mr-2" />
+                      Organize by Date
+                    </Button>
+                    <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      Group by Content Type
+                    </Button>
+                    <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white">
+                      <Settings className="w-4 h-4 mr-2" />
+                      AI Content Analysis
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/5 border-white/10">
+                  <CardHeader>
+                    <CardTitle className="text-white">Quick Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Clean Temporary Files
+                    </Button>
+                    <Button className="w-full bg-teal-500 hover:bg-teal-600 text-white">
+                      <Copy className="w-4 h-4 mr-2" />
+                      Backup Important Files
+                    </Button>
+                    <Button className="w-full bg-red-500 hover:bg-red-600 text-white">
+                      <AlertCircle className="w-4 h-4 mr-2" />
+                      Find Large Files
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="analytics" className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="bg-white/5 border-white/10">
+                  <CardHeader>
+                    <CardTitle className="text-white text-lg">Storage Analysis</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Images</span>
+                        <span className="text-white">15.2 GB</span>
                       </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        {file.type === 'folder' && (
-                          <Badge variant="outline" className="border-blue-500/30 text-blue-400">
-                            Folder
-                          </Badge>
-                        )}
-                        {file.name.endsWith('.py') && (
-                          <Badge variant="outline" className="border-green-500/30 text-green-400">
-                            Python
-                          </Badge>
-                        )}
-                        {file.name.endsWith('.json') && (
-                          <Badge variant="outline" className="border-yellow-500/30 text-yellow-400">
-                            JSON
-                          </Badge>
-                        )}
-                        {file.name.endsWith('.md') && (
-                          <Badge variant="outline" className="border-purple-500/30 text-purple-400">
-                            Markdown
-                          </Badge>
-                        )}
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Videos</span>
+                        <span className="text-white">42.8 GB</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Documents</span>
+                        <span className="text-white">3.1 GB</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          </div>
-        </div>
 
-        {/* PROMINENT AI Assistant */}
-        <div className="w-96 border-l border-white/10 flex flex-col bg-gradient-to-b from-teal-900/20 to-green-900/20">
-          <Tabs defaultValue="chat" className="h-full flex flex-col">
-            <TabsList className="bg-white/5 border-b border-white/10 rounded-none">
-              <TabsTrigger value="chat" className="text-white">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                AI Assistant
-              </TabsTrigger>
-              {editingFile && (
-                <TabsTrigger value="editor" className="text-white">
-                  <Edit className="w-4 h-4 mr-2" />
-                  Editor
-                </TabsTrigger>
-              )}
-            </TabsList>
-
-            <TabsContent value="chat" className="flex-1 m-0 flex flex-col">
-              <div className="p-4 border-b border-white/10 bg-black/20">
-                <h3 className="text-white font-bold text-lg">AI File Assistant</h3>
-                <p className="text-gray-300 text-sm mt-1">Ask me to help with file operations</p>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {chatMessages.map((message, index) => (
-                  <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[85%] p-3 rounded-lg ${
-                      message.role === 'user' 
-                        ? 'bg-blue-500/30 text-blue-100 border border-blue-400/30' 
-                        : 'bg-white/10 text-gray-200 border border-white/20'
-                    }`}>
-                      {message.content}
+                <Card className="bg-white/5 border-white/10">
+                  <CardHeader>
+                    <CardTitle className="text-white text-lg">Duplicates Found</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-orange-400">24</div>
+                      <div className="text-sm text-gray-400">duplicate files</div>
+                      <div className="text-sm text-green-400 mt-1">8.4 GB recoverable</div>
                     </div>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="p-4 border-t border-white/10 bg-black/20">
-                <div className="flex space-x-2">
-                  <Input
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Ask about file operations..."
-                    className="flex-1 bg-white/10 border-white/20 text-white placeholder-gray-300 h-10"
-                    onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
-                  />
-                  <Button
-                    onClick={handleChatSubmit}
-                    disabled={!chatInput.trim()}
-                    size="sm"
-                    className="bg-teal-500 hover:bg-teal-600 text-white px-4 h-10"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/5 border-white/10">
+                  <CardHeader>
+                    <CardTitle className="text-white text-lg">AI Suggestions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center text-blue-400">
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        <span>Organize photos by date</span>
+                      </div>
+                      <div className="flex items-center text-yellow-400">
+                        <AlertCircle className="w-4 h-4 mr-2" />
+                        <span>Remove old downloads</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
-
-            {editingFile && (
-              <TabsContent value="editor" className="flex-1 m-0 flex flex-col">
-                <div className="p-4 border-b border-white/10 bg-black/20">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-white font-medium">Editing: {editingFile}</h3>
-                    <div className="flex space-x-2">
-                      <Button
-                        onClick={handleSaveFile}
-                        size="sm"
-                        className="bg-green-500 hover:bg-green-600 text-white"
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        onClick={() => setEditingFile(null)}
-                        size="sm"
-                        variant="outline"
-                        className="bg-white/5 border-white/10 text-white hover:bg-white/10"
-                      >
-                        Close
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex-1">
-                  <Textarea
-                    value={fileContent}
-                    onChange={(e) => setFileContent(e.target.value)}
-                    className="w-full h-full bg-slate-900 text-gray-300 font-mono text-sm resize-none border-none rounded-none"
-                    placeholder="File content will appear here..."
-                  />
-                </div>
-              </TabsContent>
-            )}
           </Tabs>
+        </div>
+
+        {/* Standardized AI Chat Interface */}
+        <div className="w-96 border-l border-white/10">
+          <AIChat
+            title="File Management AI"
+            placeholder="Ask me to organize files, find duplicates, clean up folders..."
+            initialMessage="Hello! I'm your AI file manager. I can help you organize files, find duplicates, clean up your system, and manage your digital content intelligently. What would you like me to help you with?"
+            onSendMessage={handleAIMessage}
+            className="h-full"
+          />
         </div>
       </div>
     </div>

@@ -1,24 +1,19 @@
 
 import { useState } from "react";
-import { Code, Play, Save, Download, MessageSquare, Send, Brain, Copy } from "lucide-react";
+import { Code, Play, Save, Download, Copy, Brain, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AIChat } from "@/components/shared/AIChat";
 
 export const CodeSandbox = () => {
   const [code, setCode] = useState('// Write your code here\nconsole.log("Hello, NexusAI!");');
   const [output, setOutput] = useState('');
-  const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState<Array<{role: string, content: string}>>([
-    { role: 'assistant', content: 'Hello! I\'m your AI coding assistant. I can help you write, debug, and explain code. What would you like to work on?' }
-  ]);
   const [aiRequest, setAiRequest] = useState('');
 
   const runCode = () => {
     try {
-      // Simulate code execution
       const result = `Executed successfully!\nOutput: Hello, NexusAI!\nExecution time: 0.23s`;
       setOutput(result);
     } catch (error) {
@@ -26,42 +21,30 @@ export const CodeSandbox = () => {
     }
   };
 
-  const handleChatSubmit = () => {
-    if (!chatInput.trim()) return;
-    
-    setChatMessages(prev => [
-      ...prev,
-      { role: 'user', content: chatInput },
-      { role: 'assistant', content: `I'll help you with "${chatInput}". Let me analyze your code and provide suggestions.` }
-    ]);
-    setChatInput('');
-  };
-
   const handleAiGenerate = () => {
     if (!aiRequest.trim()) return;
     
     const generatedCode = `// AI Generated Code for: ${aiRequest}
 function ${aiRequest.replace(/\s+/g, '')}() {
-  // Implementation will be generated based on your request
   console.log("This is AI-generated code for: ${aiRequest}");
   return true;
 }
 
-// Call the function
 ${aiRequest.replace(/\s+/g, '')}();`;
 
     setCode(generatedCode);
     setOutput('AI code generated successfully! Click "Run Code" to execute.');
-    setChatMessages(prev => [
-      ...prev,
-      { role: 'assistant', content: `I've generated code for "${aiRequest}". The code has been added to your editor.` }
-    ]);
     setAiRequest('');
+  };
+
+  const handleAIMessage = (message: string) => {
+    console.log('AI Code Assistant received:', message);
+    // Handle AI communication here
   };
 
   return (
     <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 flex flex-col">
-      {/* Prominent Header with Communication */}
+      {/* Header */}
       <div className="border-b border-white/10 p-6 bg-black/20 backdrop-blur-lg">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
@@ -86,17 +69,17 @@ ${aiRequest.replace(/\s+/g, '')}();`;
           </div>
         </div>
 
-        {/* PRIMARY COMMUNICATION INTERFACE - Most Prominent */}
+        {/* Quick AI Code Generator */}
         <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 p-4 rounded-lg border border-purple-500/30">
           <div className="flex items-center space-x-2 mb-3">
             <Brain className="w-5 h-5 text-purple-400" />
-            <h3 className="text-white font-semibold">AI Code Assistant - Tell me what to code</h3>
+            <h3 className="text-white font-semibold">Quick Code Generator</h3>
           </div>
           <div className="flex space-x-3">
             <Input
               value={aiRequest}
               onChange={(e) => setAiRequest(e.target.value)}
-              placeholder="Describe what code you want me to generate... (e.g., 'create a function to sort an array', 'build a React component for a todo list')"
+              placeholder="Describe code to generate... (e.g., 'create a function to sort an array')"
               className="flex-1 bg-white/10 border-white/20 text-white placeholder-gray-300 h-12 text-base"
               onKeyPress={(e) => e.key === 'Enter' && handleAiGenerate()}
             />
@@ -106,14 +89,14 @@ ${aiRequest.replace(/\s+/g, '')}();`;
               className="bg-purple-500 hover:bg-purple-600 text-white px-6 h-12"
             >
               <Brain className="w-4 h-4 mr-2" />
-              Generate Code
+              Generate
             </Button>
           </div>
         </div>
       </div>
 
       <div className="flex-1 flex">
-        {/* Code Editor */}
+        {/* Code Editor and Output */}
         <div className="flex-1 flex flex-col">
           <div className="flex-1 p-4">
             <Card className="bg-white/5 border-white/10 h-full">
@@ -157,50 +140,15 @@ ${aiRequest.replace(/\s+/g, '')}();`;
           </div>
         </div>
 
-        {/* PROMINENT AI Chat Assistant */}
-        <div className="w-96 border-l border-white/10 flex flex-col bg-gradient-to-b from-purple-900/20 to-blue-900/20">
-          <div className="p-4 border-b border-white/10 bg-black/30">
-            <h3 className="text-white font-bold text-lg flex items-center">
-              <MessageSquare className="w-5 h-5 mr-2 text-purple-400" />
-              Live AI Assistant
-            </h3>
-            <p className="text-gray-300 text-sm mt-1">Ask questions, get help, debug code</p>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {chatMessages.map((message, index) => (
-              <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-3 rounded-lg ${
-                  message.role === 'user' 
-                    ? 'bg-blue-500/30 text-blue-100 border border-blue-400/30' 
-                    : 'bg-white/10 text-gray-200 border border-white/20'
-                }`}>
-                  {message.content}
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          {/* PROMINENT Chat Input */}
-          <div className="p-4 border-t border-white/10 bg-black/20">
-            <div className="flex space-x-2">
-              <Input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask me anything about coding..."
-                className="flex-1 bg-white/10 border-white/20 text-white placeholder-gray-300 h-10"
-                onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
-              />
-              <Button
-                onClick={handleChatSubmit}
-                disabled={!chatInput.trim()}
-                size="sm"
-                className="bg-green-500 hover:bg-green-600 text-white px-4 h-10"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+        {/* Standardized AI Chat Interface */}
+        <div className="w-96 border-l border-white/10">
+          <AIChat
+            title="Code Assistant"
+            placeholder="Ask about coding, debugging, or optimizations..."
+            initialMessage="Hello! I'm your AI coding assistant. I can help you write, debug, explain, and optimize code. What would you like to work on?"
+            onSendMessage={handleAIMessage}
+            className="h-full"
+          />
         </div>
       </div>
     </div>
