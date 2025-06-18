@@ -406,5 +406,4 @@ class AIPlatformServer:
 # Server startup
 if __name__ == "__main__":
     server = AIPlatformServer()
-    server.run()
-
+    server.run(port=7777)  # Explicitly set port 7777

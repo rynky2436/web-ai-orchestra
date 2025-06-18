@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   MessageSquare, 
@@ -9,7 +10,9 @@ import {
   Cpu,
   Power,
   Brain,
-  Zap
+  Zap,
+  ArrowLeft,
+  Home
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,9 +25,10 @@ interface SidebarProps {
   activeView: 'chat' | 'agents' | 'settings';
   onViewChange: (view: 'chat' | 'agents' | 'settings') => void;
   selectedAgent: string | null;
+  onAgentChange?: (agent: string | null) => void;
 }
 
-export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProps) => {
+export const Sidebar = ({ activeView, onViewChange, selectedAgent, onAgentChange }: SidebarProps) => {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [serverStatus, setServerStatus] = useState<'connected' | 'disconnected' | 'loading'>('connected');
 
@@ -93,7 +97,12 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
       'files': 'File Manager',
       'plugins': 'Plugin System',
       'ai-switch': 'AI Switch',
-      'voice': 'Voice Control'
+      'voice': 'Voice Control',
+      'customer-manager': 'Customer Manager',
+      'ai-image-creator': 'AI Image Creator',
+      'social-media-manager': 'Social Media Manager',
+      'smart-home-controller': 'Smart Home Controller',
+      'code-creator': 'Code Creator Agent'
     };
     
     return agentNames[agent] || agent;
@@ -112,10 +121,29 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
       'files': SettingsIcon,
       'plugins': Zap,
       'ai-switch': Zap,
-      'voice': Mic
+      'voice': Mic,
+      'customer-manager': Bot,
+      'ai-image-creator': Bot,
+      'social-media-manager': Bot,
+      'smart-home-controller': Bot,
+      'code-creator': Bot
     };
     
     return agentIcons[agent] || Bot;
+  };
+
+  const handleBackToAgents = () => {
+    if (onAgentChange) {
+      onAgentChange(null);
+    }
+    onViewChange('agents');
+  };
+
+  const handleBackToChat = () => {
+    if (onAgentChange) {
+      onAgentChange(null);
+    }
+    onViewChange('chat');
   };
 
   return (
@@ -132,6 +160,31 @@ export const Sidebar = ({ activeView, onViewChange, selectedAgent }: SidebarProp
           </div>
         </div>
       </div>
+
+      {/* Back Navigation - Show when an agent is selected */}
+      {selectedAgent && (
+        <div className="p-4 border-b border-white/10">
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBackToAgents}
+              className="flex-1 bg-white/5 border-white/10 text-white hover:bg-white/10"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Agents
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBackToChat}
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+            >
+              <Home className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* System Status */}
       <div className="p-4">

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ChatPanel } from "@/components/chat/ChatPanel";
@@ -21,6 +22,15 @@ import { AIImageCreator } from "@/components/agents/AIImageCreator";
 const Index = () => {
   const [activeView, setActiveView] = useState<'chat' | 'agents' | 'settings'>('chat');
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+
+  const handleAgentChange = (agent: string | null) => {
+    setSelectedAgent(agent);
+  };
+
+  const handleSelectAgent = (agent: string) => {
+    setSelectedAgent(agent);
+    setActiveView('chat');
+  };
 
   const renderMainContent = () => {
     // Handle new agent modules
@@ -75,7 +85,7 @@ const Index = () => {
       case 'chat':
         return <ChatPanel selectedAgent={selectedAgent} />;
       case 'agents':
-        return <AgentLauncher onSelectAgent={setSelectedAgent} onViewChange={setActiveView} />;
+        return <AgentLauncher onSelectAgent={handleSelectAgent} onViewChange={setActiveView} />;
       case 'settings':
         return <Settings />;
       default:
@@ -90,6 +100,7 @@ const Index = () => {
           activeView={activeView} 
           onViewChange={setActiveView}
           selectedAgent={selectedAgent}
+          onAgentChange={handleAgentChange}
         />
         <main className="flex-1 overflow-hidden">
           {renderMainContent()}
