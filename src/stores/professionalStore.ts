@@ -1,13 +1,11 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Config, AIProviderManager, ProfessionalModuleManager } from '@/services/professionalAI';
+import { Config, ProfessionalModuleManager } from '@/services/professionalAI';
 
 interface ProfessionalStore {
   config: Config;
-  aiProvider: AIProviderManager | null;
   moduleManager: ProfessionalModuleManager | null;
-  currentProvider: string;
   currentModule: string;
   isProcessing: boolean;
   conversations: Array<{
@@ -15,12 +13,10 @@ interface ProfessionalStore {
     timestamp: string;
     userMessage: string;
     aiResponse: any;
-    provider: string;
     module: string;
   }>;
   
   updateConfig: (updates: Partial<Config>) => void;
-  setCurrentProvider: (provider: string) => void;
   setCurrentModule: (module: string) => void;
   processRequest: (message: string) => Promise<any>;
   addConversation: (conversation: any) => void;
@@ -28,13 +24,10 @@ interface ProfessionalStore {
 }
 
 const defaultConfig: Config = {
-  openai_api_key: '',
-  anthropic_api_key: '',
-  grok_api_key: '',
-  elevenlabs_api_key: '',
   ollama_url: 'http://localhost:11434',
   database_path: 'data/ai_platform.db',
-  port: 5000,
+  memory_data_dir: 'data/memory',
+  port: 7777,
   host: '0.0.0.0',
   debug: false
 };
@@ -43,31 +36,25 @@ export const useProfessionalStore = create<ProfessionalStore>()(
   persist(
     (set, get) => ({
       config: defaultConfig,
-      aiProvider: null,
       moduleManager: null,
-      currentProvider: 'openai',
       currentModule: 'research',
       isProcessing: false,
       conversations: [],
 
       updateConfig: (updates) => {
         const newConfig = { ...get().config, ...updates };
-        const aiProvider = new AIProviderManager(newConfig);
-        const moduleManager = new ProfessionalModuleManager(newConfig, aiProvider);
+        const moduleManager = new ProfessionalModuleManager(newConfig);
         
         set({ 
           config: newConfig,
-          aiProvider,
           moduleManager
         });
       },
-
-      setCurrentProvider: (provider) => set({ currentProvider: provider }),
       
       setCurrentModule: (module) => set({ currentModule: module }),
 
       processRequest: async (message) => {
-        const { moduleManager, currentProvider, currentModule } = get();
+        const { moduleManager, currentModule } = get();
         
         if (!moduleManager) {
           throw new Error('Platform not initialized');
@@ -76,14 +63,13 @@ export const useProfessionalStore = create<ProfessionalStore>()(
         set({ isProcessing: true });
 
         try {
-          const result = await moduleManager.processRequest(message, currentModule, currentProvider);
+          const result = await moduleManager.processRequest(message, currentModule);
           
           const conversation = {
             id: Date.now().toString(),
             timestamp: new Date().toISOString(),
             userMessage: message,
             aiResponse: result,
-            provider: currentProvider,
             module: currentModule
           };
 
@@ -96,20 +82,19 @@ export const useProfessionalStore = create<ProfessionalStore>()(
 
       addConversation: (conversation) => {
         set(state => ({
-          conversations: [conversation, ...state.conversations].slice(0, 100) // Keep last 100
+          conversations: [conversation, ...state.conversations].slice(0, 100)
         }));
       },
 
       initializePlatform: () => {
         const { config } = get();
-        const aiProvider = new AIProviderManager(config);
-        const moduleManager = new ProfessionalModuleManager(config, aiProvider);
+        const moduleManager = new ProfessionalModuleManager(config);
         
-        set({ aiProvider, moduleManager });
+        set({ moduleManager });
       }
     }),
     {
-      name: 'nexusai-professional'
+      name: 'custom-reasoning-platform'
     }
   )
 );

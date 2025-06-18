@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Brain, Cpu, Mic, Globe, FileText, Database, Settings, Play, Copy } from "lucide-react";
+import { Brain, Cpu, Search, BarChart3, Database, Settings, Play, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,12 +13,10 @@ import { toast } from "@/hooks/use-toast";
 export const ProfessionalAI = () => {
   const {
     config,
-    currentProvider,
     currentModule,
     isProcessing,
     conversations,
     updateConfig,
-    setCurrentProvider,
     setCurrentModule,
     processRequest,
     initializePlatform
@@ -28,10 +26,9 @@ export const ProfessionalAI = () => {
   const [response, setResponse] = useState('');
   const [showConfig, setShowConfig] = useState(false);
   const [configForm, setConfigForm] = useState({
-    openai_key: '',
-    anthropic_key: '',
-    grok_key: '',
-    elevenlabs_key: ''
+    host: config.host || '0.0.0.0',
+    port: config.port || 7777,
+    memory_data_dir: config.memory_data_dir || 'data/memory'
   });
 
   useEffect(() => {
@@ -39,19 +36,11 @@ export const ProfessionalAI = () => {
   }, [initializePlatform]);
 
   const modules = [
-    { id: 'research', name: 'Deep Research', icon: Brain, description: 'Comprehensive research and analysis' },
-    { id: 'coding', name: 'Code Generation', icon: Cpu, description: 'Advanced code generation and execution' },
-    { id: 'voice', name: 'Voice Synthesis', icon: Mic, description: 'ElevenLabs voice generation' },
-    { id: 'browser', name: 'Browser Automation', icon: Globe, description: 'Web automation and scraping' },
-    { id: 'files', name: 'File Management', icon: FileText, description: 'Advanced file operations' },
-    { id: 'memory', name: 'Memory System', icon: Database, description: 'Conversation memory and learning' }
-  ];
-
-  const providers = [
-    { id: 'openai', name: 'OpenAI (GPT-4)', status: config.openai_api_key ? 'ready' : 'config' },
-    { id: 'claude', name: 'Anthropic (Claude)', status: config.anthropic_api_key ? 'ready' : 'config' },
-    { id: 'grok', name: 'xAI (Grok)', status: config.grok_api_key ? 'ready' : 'config' },
-    { id: 'ollama', name: 'Ollama (Local)', status: 'ready' }
+    { id: 'research', name: 'Deep Research', icon: Search, description: 'Advanced research with reasoning' },
+    { id: 'coding', name: 'Strategic Coding', icon: Cpu, description: 'Intelligent code generation' },
+    { id: 'decision', name: 'Decision Engine', icon: Brain, description: 'Multi-level decision making' },
+    { id: 'analysis', name: 'Deep Analysis', icon: BarChart3, description: 'Pattern recognition & insights' },
+    { id: 'memory', name: 'Memory System', icon: Database, description: 'Semantic memory & learning' }
   ];
 
   const handleSendMessage = async () => {
@@ -64,12 +53,12 @@ export const ProfessionalAI = () => {
       
       toast({
         title: "Request Processed",
-        description: `Successfully processed via ${currentProvider} ${currentModule} module`
+        description: `Successfully processed via ${currentModule} reasoning module`
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to process request",
+        description: "Failed to process request - ensure Python backend is running",
         variant: "destructive"
       });
       console.error('Processing error:', error);
@@ -78,15 +67,14 @@ export const ProfessionalAI = () => {
 
   const handleConfigSave = () => {
     updateConfig({
-      openai_api_key: configForm.openai_key,
-      anthropic_api_key: configForm.anthropic_key,
-      grok_api_key: configForm.grok_key,
-      elevenlabs_api_key: configForm.elevenlabs_key
+      host: configForm.host,
+      port: parseInt(configForm.port.toString()),
+      memory_data_dir: configForm.memory_data_dir
     });
 
     toast({
       title: "Configuration Updated",
-      description: "API keys have been saved securely"
+      description: "Backend connection settings have been saved"
     });
     
     setShowConfig(false);
@@ -97,12 +85,12 @@ export const ProfessionalAI = () => {
       <div className="border-b border-white/10 p-4 bg-black/20 backdrop-blur-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
               <Brain className="w-4 h-4 text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-white">Professional AI Platform</h2>
-            <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-              Multi-Provider Ready
+            <h2 className="text-xl font-semibold text-white">Custom Reasoning Platform</h2>
+            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+              Advanced AI Reasoning
             </Badge>
           </div>
           <Button
@@ -119,107 +107,71 @@ export const ProfessionalAI = () => {
         {showConfig && (
           <Card className="bg-white/5 border-white/10">
             <CardHeader>
-              <CardTitle className="text-white">API Configuration</CardTitle>
+              <CardTitle className="text-white">Backend Configuration</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Input
-                  type="password"
-                  placeholder="OpenAI API Key"
-                  value={configForm.openai_key}
-                  onChange={(e) => setConfigForm({...configForm, openai_key: e.target.value})}
+                  placeholder="Backend Host"
+                  value={configForm.host}
+                  onChange={(e) => setConfigForm({...configForm, host: e.target.value})}
                   className="bg-white/5 border-white/10 text-white placeholder-gray-400"
                 />
                 <Input
-                  type="password"
-                  placeholder="Anthropic API Key"
-                  value={configForm.anthropic_key}
-                  onChange={(e) => setConfigForm({...configForm, anthropic_key: e.target.value})}
+                  type="number"
+                  placeholder="Backend Port"
+                  value={configForm.port}
+                  onChange={(e) => setConfigForm({...configForm, port: e.target.value})}
                   className="bg-white/5 border-white/10 text-white placeholder-gray-400"
                 />
                 <Input
-                  type="password"
-                  placeholder="Grok API Key"
-                  value={configForm.grok_key}
-                  onChange={(e) => setConfigForm({...configForm, grok_key: e.target.value})}
-                  className="bg-white/5 border-white/10 text-white placeholder-gray-400"
-                />
-                <Input
-                  type="password"
-                  placeholder="ElevenLabs API Key"
-                  value={configForm.elevenlabs_key}
-                  onChange={(e) => setConfigForm({...configForm, elevenlabs_key: e.target.value})}
+                  placeholder="Memory Data Directory"
+                  value={configForm.memory_data_dir}
+                  onChange={(e) => setConfigForm({...configForm, memory_data_dir: e.target.value})}
                   className="bg-white/5 border-white/10 text-white placeholder-gray-400"
                 />
               </div>
-              <Button onClick={handleConfigSave} className="bg-purple-500 hover:bg-purple-600 text-white">
+              <Button onClick={handleConfigSave} className="bg-blue-500 hover:bg-blue-600 text-white">
                 Save Configuration
               </Button>
             </CardContent>
           </Card>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader>
-              <CardTitle className="text-white">AI Provider</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select value={currentProvider} onValueChange={setCurrentProvider}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-white/10">
-                  {providers.map((provider) => (
-                    <SelectItem key={provider.id} value={provider.id} className="text-white hover:bg-white/10">
-                      <div className="flex items-center justify-between w-full">
-                        <span>{provider.name}</span>
-                        <Badge variant={provider.status === 'ready' ? 'default' : 'destructive'} className="ml-2">
-                          {provider.status}
-                        </Badge>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
+        <Card className="bg-white/5 border-white/10">
+          <CardHeader>
+            <CardTitle className="text-white">Active Reasoning Module</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Select value={currentModule} onValueChange={setCurrentModule}>
+              <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-white/10">
+                {modules.map((module) => (
+                  <SelectItem key={module.id} value={module.id} className="text-white hover:bg-white/10">
+                    <div className="flex items-center space-x-2">
+                      <module.icon className="w-4 h-4" />
+                      <span>{module.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
 
-          <Card className="bg-white/5 border-white/10">
-            <CardHeader>
-              <CardTitle className="text-white">Active Module</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select value={currentModule} onValueChange={setCurrentModule}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-white/10">
-                  {modules.map((module) => (
-                    <SelectItem key={module.id} value={module.id} className="text-white hover:bg-white/10">
-                      <div className="flex items-center space-x-2">
-                        <module.icon className="w-4 h-4" />
-                        <span>{module.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {modules.map((module) => (
             <Card 
               key={module.id}
               className={`bg-white/5 border-white/10 cursor-pointer transition-all hover:bg-white/10 ${
-                currentModule === module.id ? 'ring-2 ring-purple-500' : ''
+                currentModule === module.id ? 'ring-2 ring-blue-500' : ''
               }`}
               onClick={() => setCurrentModule(module.id)}
             >
               <CardContent className="p-4 text-center">
-                <module.icon className="w-6 h-6 text-purple-400 mx-auto mb-2" />
+                <module.icon className="w-6 h-6 text-blue-400 mx-auto mb-2" />
                 <h3 className="text-sm font-medium text-white">{module.name}</h3>
                 <p className="text-xs text-gray-400 mt-1">{module.description}</p>
               </CardContent>
@@ -229,23 +181,23 @@ export const ProfessionalAI = () => {
 
         <Card className="bg-white/5 border-white/10">
           <CardHeader>
-            <CardTitle className="text-white">AI Request Interface</CardTitle>
+            <CardTitle className="text-white">Reasoning Interface</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Enter your AI request..."
+              placeholder="Enter your reasoning task..."
               className="bg-white/5 border-white/10 text-white placeholder-gray-400 min-h-24"
             />
             <div className="flex space-x-2">
               <Button
                 onClick={handleSendMessage}
                 disabled={isProcessing || !message.trim()}
-                className="bg-purple-500 hover:bg-purple-600 text-white"
+                className="bg-blue-500 hover:bg-blue-600 text-white"
               >
                 <Play className="w-4 h-4 mr-2" />
-                {isProcessing ? 'Processing...' : 'Execute Request'}
+                {isProcessing ? 'Processing...' : 'Execute Reasoning'}
               </Button>
               <Button
                 onClick={() => setMessage('')}
@@ -262,7 +214,7 @@ export const ProfessionalAI = () => {
           <Card className="bg-white/5 border-white/10">
             <CardHeader>
               <CardTitle className="text-white flex items-center justify-between">
-                AI Response
+                Reasoning Response
                 <Button
                   size="sm"
                   onClick={() => navigator.clipboard.writeText(response)}
