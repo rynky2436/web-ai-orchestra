@@ -30,7 +30,8 @@ import {
   Lock,
   Wifi,
   HardDrive,
-  Smartphone
+  Smartphone,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -98,6 +99,24 @@ const coreModules = [
     icon: Monitor,
     color: 'from-blue-500 to-indigo-500',
     permissions: ['Home Assistant API', 'Device Control', 'Automation'],
+    status: 'ready'
+  },
+  {
+    id: 'customer-manager',
+    name: 'Customer Manager',
+    description: 'AI-powered CRM for small businesses with intelligent insights',
+    icon: Users,
+    color: 'from-blue-500 to-purple-500',
+    permissions: ['Customer Data', 'Analytics', 'Communication'],
+    status: 'ready'
+  },
+  {
+    id: 'ai-image-creator',
+    name: 'AI Image Creator',
+    description: 'Generate images with Stable Diffusion and other AI models',
+    icon: ImageIcon,
+    color: 'from-purple-500 to-pink-500',
+    permissions: ['AI Models', 'Image Generation', 'Social Integration'],
     status: 'ready'
   }
 ];

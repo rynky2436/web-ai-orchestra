@@ -15,6 +15,8 @@ import { PluginSystem } from "@/components/modules/PluginSystem";
 import { AISwitch } from "@/components/modules/AISwitch";
 import { ProfessionalAI } from "@/components/modules/ProfessionalAI";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { CustomerManager } from "@/components/agents/CustomerManager";
+import { AIImageCreator } from "@/components/agents/AIImageCreator";
 
 const Index = () => {
   const [activeView, setActiveView] = useState<'chat' | 'agents' | 'settings'>('chat');
@@ -22,6 +24,12 @@ const Index = () => {
 
   const renderMainContent = () => {
     // Handle new agent modules
+    if (selectedAgent === 'customer-manager') {
+      return <CustomerManager />;
+    }
+    if (selectedAgent === 'ai-image-creator') {
+      return <AIImageCreator />;
+    }
     if (selectedAgent === 'social-media-manager') {
       return <AISocialManager />;
     }

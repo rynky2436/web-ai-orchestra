@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { MessageSquare, Users, TrendingUp, Calendar, BarChart3, Image, Hash, Settings, Play, Pause } from "lucide-react";
+import { MessageSquare, Users, TrendingUp, Calendar, BarChart3, Image, Hash, Settings, Play, Pause, Upload, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 export const AISocialManager = () => {
   const [isActive, setIsActive] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState('all');
   const [content, setContent] = useState('');
+  const [includeAIImage, setIncludeAIImage] = useState(false);
+  const [imagePrompt, setImagePrompt] = useState('');
 
   const platforms = [
     { id: 'twitter', name: 'Twitter/X', status: 'connected', followers: '2.4K' },
@@ -24,12 +27,20 @@ export const AISocialManager = () => {
 
   const quickActions = [
     { id: 'generate-post', label: 'Generate Post', icon: MessageSquare },
+    { id: 'create-image', label: 'Create AI Image', icon: Wand2 },
     { id: 'schedule-content', label: 'Schedule Content', icon: Calendar },
     { id: 'analyze-engagement', label: 'Analyze Engagement', icon: BarChart3 },
     { id: 'find-trending', label: 'Find Trending Topics', icon: TrendingUp },
-    { id: 'create-hashtags', label: 'Generate Hashtags', icon: Hash },
-    { id: 'optimize-images', label: 'Optimize Images', icon: Image }
+    { id: 'create-hashtags', label: 'Generate Hashtags', icon: Hash }
   ];
+
+  const handleGenerateWithImage = async () => {
+    console.log('Generating post with AI image:', {
+      content,
+      imagePrompt,
+      platform: selectedPlatform
+    });
+  };
 
   return (
     <div className="h-screen bg-gradient-to-b from-slate-900/50 to-black/50 overflow-y-auto">
@@ -124,13 +135,47 @@ export const AISocialManager = () => {
                   placeholder="Describe what you want to post about, or let AI generate trending content..."
                   className="bg-white/5 border-white/10 text-white placeholder-gray-400 min-h-32"
                 />
+
+                <div className="flex items-center space-x-4 p-4 bg-white/5 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Switch checked={includeAIImage} onCheckedChange={setIncludeAIImage} />
+                    <span className="text-white text-sm">Include AI-Generated Image</span>
+                  </div>
+                  <Wand2 className="w-4 h-4 text-purple-400" />
+                </div>
+
+                {includeAIImage && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-300">Image Description</label>
+                    <Input
+                      value={imagePrompt}
+                      onChange={(e) => setImagePrompt(e.target.value)}
+                      placeholder="Describe the image you want to create for this post..."
+                      className="bg-white/5 border-white/10 text-white placeholder-gray-400"
+                    />
+                  </div>
+                )}
                 
                 <div className="flex space-x-2">
-                  <Button className="bg-pink-500 hover:bg-pink-600 text-white">
-                    Generate Content
+                  <Button 
+                    onClick={includeAIImage ? handleGenerateWithImage : undefined}
+                    className="bg-pink-500 hover:bg-pink-600 text-white"
+                  >
+                    {includeAIImage ? (
+                      <>
+                        <Wand2 className="w-4 h-4 mr-2" />
+                        Generate Content + Image
+                      </>
+                    ) : (
+                      'Generate Content'
+                    )}
                   </Button>
                   <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
                     Schedule Post
+                  </Button>
+                  <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Image
                   </Button>
                 </div>
               </CardContent>
