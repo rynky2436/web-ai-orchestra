@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { AppSidebar } from "@/components/layout/AppSidebar";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { AgentLauncher } from "@/components/agents/AgentLauncher";
 import { CodeCreatorAgent } from "@/components/agents/CodeCreatorAgent";
@@ -15,7 +15,6 @@ import { BrowserAutomation } from "@/components/modules/BrowserAutomation";
 import { PluginSystem } from "@/components/modules/PluginSystem";
 import { AISwitch } from "@/components/modules/AISwitch";
 import { ProfessionalAI } from "@/components/modules/ProfessionalAI";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { CustomerManager } from "@/components/agents/CustomerManager";
 import { AIImageCreator } from "@/components/agents/AIImageCreator";
 import { useSettingsStore } from "@/stores/settingsStore";
@@ -36,7 +35,6 @@ const Index = () => {
 
   const handleViewChange = (view: 'chat' | 'agents' | 'settings') => {
     setActiveView(view);
-    // Clear selected agent when switching to agents view
     if (view === 'agents') {
       setSelectedAgent(null);
     }
@@ -56,7 +54,7 @@ const Index = () => {
   };
 
   const renderMainContent = () => {
-    // Handle new agent modules
+    // Handle agent modules
     if (selectedAgent === 'customer-manager') {
       return <CustomerManager />;
     }
@@ -73,12 +71,12 @@ const Index = () => {
       return <CodeCreatorAgent />;
     }
     
-    // Handle renamed deep research (was professional-ai)
+    // Handle deep research
     if (selectedAgent === 'deep-research' || selectedAgent === 'professional-ai') {
       return <ProfessionalAI />;
     }
     
-    // Handle new module views
+    // Handle module views
     if (selectedAgent === 'operator') {
       return <OperatorModule />;
     }
@@ -92,7 +90,7 @@ const Index = () => {
       return <AISwitch />;
     }
     
-    // Fix routing for coder and file manager - route to proper modules instead of chat
+    // Handle tools
     if (selectedAgent === 'coder' || selectedAgent === 'sandbox') {
       return <CodeSandbox />;
     }
@@ -117,19 +115,17 @@ const Index = () => {
   };
 
   return (
-    <SidebarProvider>
-      <div className={`min-h-screen ${getBackgroundClasses()} flex w-full`}>
-        <Sidebar 
-          activeView={activeView} 
-          onViewChange={handleViewChange}
-          selectedAgent={selectedAgent}
-          onAgentChange={handleAgentChange}
-        />
-        <main className="flex-1 overflow-hidden">
-          {renderMainContent()}
-        </main>
-      </div>
-    </SidebarProvider>
+    <div className={`min-h-screen ${getBackgroundClasses()} flex w-full`}>
+      <AppSidebar 
+        activeView={activeView} 
+        onViewChange={handleViewChange}
+        selectedAgent={selectedAgent}
+        onAgentChange={handleAgentChange}
+      />
+      <main className="flex-1 overflow-hidden">
+        {renderMainContent()}
+      </main>
+    </div>
   );
 };
 
